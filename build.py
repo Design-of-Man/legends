@@ -92,6 +92,9 @@ HOSTS = [
         "slug": "mike-mcgann", "name": "Mike McGann", "mono": "MM",
         "role": "Weekday Middays", "show": "Middays with Mike McGann", "slot": "Weekdays · 10 AM – 2 PM",
         "photo": "assets/hosts/mike-mcgann.jpg",
+        # 400x600 full-body shot; face sits in the top ~16%. A centred square
+        # crop decapitates him, so anchor the crop to the top of the frame.
+        "focus": "50% 0%",
         "persons": ["Mike McGann"],
         "bio": "Mike carries the middays on Legends 100.3, keeping the Great American Songbook "
                "playing straight through the middle of the day.",
@@ -117,6 +120,8 @@ HOSTS = [
         "slug": "bob-merrill", "name": "Bob Merrill", "mono": "BM",
         "role": "Weeknights & Sundays", "show": "Legends After Dark", "slot": "Weeknights · 9–11 PM",
         "photo": "assets/hosts/bob-merrill.jpg",
+        # 250x340; head near the top and the baked-in name plate at the bottom.
+        "focus": "50% 0%",
         "persons": ["Bob Merrill"],
         "bio": "Bob hosts <em>Legends After Dark</em> on weeknights and returns for the "
                "<em>Sunday Legends Brunch</em>.",
@@ -126,6 +131,10 @@ HOSTS = [
         "role": "Founder · Late Nights", "show": "American Standards by the Sea",
         "slot": "Weeknights · 11 PM – 1 AM",
         "photo": "assets/hosts/american-standards.jpg",
+        # 300x150 show banner, not a portrait: Dick is on the left, show title on
+        # the right. A centred square crop shows only the sunset and the type, so
+        # anchor left. TODO: replace with a real portrait when the station has one.
+        "focus": "0% 50%",
         "persons": ["Dick Robinson"],
         "bio": "Founder of Legends Radio and of the Connecticut School of Broadcasting. His "
                "<em>American Standards by the Sea</em> is the station's flagship programme, "
@@ -142,6 +151,7 @@ HOSTS = [
         "slug": "cindy-hite", "name": "Cindy Hite", "mono": "CH",
         "role": "Cindy on Legends", "show": "Cindy on Legends", "slot": "Weekly",
         "photo": "assets/hosts/cindy-hite.jpg",
+        "focus": "50% 25%",
         "persons": ["Cindy Hite"],
         "bio": "Cindy hosts <em>Cindy on Legends</em> on Legends 100.3.",
     },
@@ -597,8 +607,12 @@ ON_DEMAND = [
 
 def host_card(h, idx=0, full=False):
     persons = ""
-    img = ('<img src="%s" alt="%s, %s on Legends Radio 100.3 FM" loading="lazy" decoding="async">'
-           % (h["photo"], html.escape(h["name"]), html.escape(h["role"]))) if h.get("photo") else ""
+    # Medallions are square + circular with object-fit:cover. Portraits whose
+    # subject is not vertically centred need an explicit focal point, or the
+    # crop takes the middle of the frame and cuts the face off.
+    focus = (' style="object-position:%s"' % html.escape(h["focus"], quote=True)) if h.get("focus") else ""
+    img = ('<img src="%s" alt="%s, %s on Legends Radio 100.3 FM" loading="lazy" decoding="async"%s>'
+           % (h["photo"], html.escape(h["name"]), html.escape(h["role"]), focus)) if h.get("photo") else ""
     bio = ('<p class="host-bio">%s</p>' % h["bio"]) if full else ""
     return (
         '<article class="card host-card reveal reveal-d%d">'
@@ -684,14 +698,11 @@ def home_page():
         '<div class="hero-visual reveal reveal-d2">' + np_card() + '</div>'
         '</div></div></section>'
     )
-    stats = (
-        '<section class="section-tight"><div class="container-wide"><div class="stats">'
-        '<div class="stat"><div class="num">100.3</div><div class="lbl">FM · Live &amp; Local</div></div>'
-        '<div class="stat"><div class="num" data-count="75" data-suffix="+"></div><div class="lbl">Syndicated Stations</div></div>'
-        '<div class="stat"><div class="num">2014</div><div class="lbl">On the Air Since</div></div>'
-        '<div class="stat"><div class="num">24/7</div><div class="lbl">Worldwide Stream</div></div>'
-        '</div></div></section>'
-    )
+    # NB: there is deliberately no stats strip here. The hero already carries
+    # 2014 / 75+ / 24-7 in .hero-meta and "100.3 FM · Live & Local" in the hero
+    # badge, so a full-width strip two screens later repeated every one of its
+    # four figures. The strip still ships on About and Advertise, where the
+    # numbers are not otherwise on the page.
     intro = (
         '<section class="section surface"><div class="container"><div class="split">'
         '<div class="split-media reveal"><div class="deco-frame">' + emblem_big() + '</div></div>'
@@ -742,7 +753,7 @@ def home_page():
         + listen_options_grid() +
         '</div></section>'
     )
-    body = hero + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
+    body = hero + marquee() + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
         "Pour a drink. Turn it up.",
         "The Great American Songbook is playing right now on 100.3 FM — and streaming worldwide.",
         secondary=("shows.html", "Browse Shows"))
@@ -1233,7 +1244,7 @@ def main():
     write("site.webmanifest", build_manifest())
     print("Built %d pages + sitemap/robots/manifest (%d KB) · css v=%s js v=%s"
           % (len(pages), total // 1024, CSS_V, JS_V))
-    print("Preview:  python3 -m http.server 8000  →  http://localhost:8000/legends-radio/")
+    print("Preview:  python3 -m http.server 8000  →  http://localhost:8000/")
 
 if __name__ == "__main__":
     main()

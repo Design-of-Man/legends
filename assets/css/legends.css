@@ -378,6 +378,12 @@ section{position:relative;}
   -webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .45s;}
 .card:hover{transform:translateY(-6px);border-color:transparent;box-shadow:var(--shadow);}
 .card:hover::before{opacity:1;}
+/* Grid cards stretch to the tallest sibling, so a trailing CTA used to sit
+   wherever that card's copy happened to stop — a row of cards read as a
+   ragged edge. Pin the trailing CTA to the bottom so the row shares one
+   baseline regardless of how long each blurb runs. */
+.card{display:flex;flex-direction:column;}
+.card>.mt-2:last-child,.card>.mt-3:last-child{margin-top:auto;padding-top:1.15rem;}
 
 /* ==========================================================================
    SHOWS / HOSTS
