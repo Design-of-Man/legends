@@ -698,14 +698,11 @@ def home_page():
         '<div class="hero-visual reveal reveal-d2">' + np_card() + '</div>'
         '</div></div></section>'
     )
-    stats = (
-        '<section class="section-tight"><div class="container-wide"><div class="stats">'
-        '<div class="stat"><div class="num">100.3</div><div class="lbl">FM · Live &amp; Local</div></div>'
-        '<div class="stat"><div class="num" data-count="75" data-suffix="+"></div><div class="lbl">Syndicated Stations</div></div>'
-        '<div class="stat"><div class="num">2014</div><div class="lbl">On the Air Since</div></div>'
-        '<div class="stat"><div class="num">24/7</div><div class="lbl">Worldwide Stream</div></div>'
-        '</div></div></section>'
-    )
+    # NB: there is deliberately no stats strip here. The hero already carries
+    # 2014 / 75+ / 24-7 in .hero-meta and "100.3 FM · Live & Local" in the hero
+    # badge, so a full-width strip two screens later repeated every one of its
+    # four figures. The strip still ships on About and Advertise, where the
+    # numbers are not otherwise on the page.
     intro = (
         '<section class="section surface"><div class="container"><div class="split">'
         '<div class="split-media reveal"><div class="deco-frame">' + emblem_big() + '</div></div>'
@@ -756,7 +753,7 @@ def home_page():
         + listen_options_grid() +
         '</div></section>'
     )
-    body = hero + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
+    body = hero + marquee() + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
         "Pour a drink. Turn it up.",
         "The Great American Songbook is playing right now on 100.3 FM — and streaming worldwide.",
         secondary=("shows.html", "Browse Shows"))
