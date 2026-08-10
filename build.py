@@ -1233,7 +1233,7 @@ def main():
     write("site.webmanifest", build_manifest())
     print("Built %d pages + sitemap/robots/manifest (%d KB) · css v=%s js v=%s"
           % (len(pages), total // 1024, CSS_V, JS_V))
-    print("Preview:  python3 -m http.server 8000  →  http://localhost:8000/legends-radio/")
+    print("Preview:  python3 -m http.server 8000  →  http://localhost:8000/")
 
 if __name__ == "__main__":
     main()

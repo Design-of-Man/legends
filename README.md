@@ -2,12 +2,13 @@
 
 A dynamic, premium marketing + streaming site for **Legends Radio 100.3 FM (WLML-FM)**,
 "Where Legendary Music Lives" — the Great American Songbook, live & local from Florida's
-Palm Beaches. Built as a self-contained static site with the same philosophy as the rest
-of this repo: **`build.py` is the single source of truth.**
+Palm Beaches. Built as a self-contained static site:
+**`build.py` is the single source of truth.**
 
-> This lives in the `legends-radio/` subfolder so it can be previewed on this project's
-> Vercel deploy at `/legends-radio/` without touching the First Rehab site. It is designed
-> to move to its own domain unchanged (all internal links are relative).
+> This site began life in a `legends-radio/` subfolder of another project's repo. It now
+> lives in its own repo (`Design-of-Man/legends`) and deploys at the **root** of its own
+> Vercel project, so `SITE_BASE_PATH` in `build.py` is `"/"`. All internal links are
+> relative, so it can move domains unchanged.
 
 ## What's in the box
 - **8 pages + 404**: Home, Listen Live, Shows & Schedule, On-Air Personalities, Events,
@@ -41,13 +42,11 @@ of this repo: **`build.py` is the single source of truth.**
 
 ## Build & preview
 ```bash
-cd legends-radio
-python3 build.py
 # from the repo root:
-python3 -m http.server 8000   # →  http://localhost:8000/legends-radio/
+python3 build.py
+python3 -m http.server 8000   # →  http://localhost:8000/
 ```
-CSS/JS links carry build-time content-hash cache-busters (`asset_v()`), matching the
-convention in the rest of this repo.
+CSS/JS links carry build-time content-hash cache-busters (`asset_v()`).
 
 ## Facts & sourcing
 Station facts are grounded in public sources (WLML-FM / legendsradio.com): call sign,
