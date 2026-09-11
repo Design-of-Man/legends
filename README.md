@@ -218,3 +218,110 @@ independently verified.
   them against the current clock.
 - **Audience figures** — the station publishes these; confirm the source before
   they go in a media kit.
+
+## 2026-09 — shows, audio, video and a calendar that updates itself
+
+The site grew from 9 pages to 25, and from a schedule grid to something you can
+actually listen to and watch.
+
+### Live "Now Playing", with album art
+
+The station's streaming vendor (SecureNetSystems) publishes two feeds that the
+browser can read directly — both send `Access-Control-Allow-Origin`, so there is
+no backend and no proxy:
+
+| Feed | What it gives |
+|---|---|
+| `player_status_update/WLML.xml` | the current item — **goes blank during ad breaks and talk** |
+| `player_status_update/WLML_history.xml` | the last 30 songs, newest first |
+
+Each song carries title, artist, album, duration and a **cover-art URL on the
+vendor's own CDN** (also CORS-open, `max-age=86400`).
+
+**On the artwork question:** this is the same art the station's official
+SecureNet player already displays, served by the station's own licensed
+streaming vendor as part of its streaming service. Nothing is scraped from a
+third party and no iTunes/Spotify lookup is involved — which is why this route
+was chosen over the usual album-art APIs.
+
+About **40% of tracks carry no cover**, so the spinning vinyl is a designed
+fallback, not a broken image. The poller stops while the tab is hidden.
+
+This drives: the sticky player, the hero card's live track line, OS/lock-screen
+media metadata, and the **Just Played** board on `listen.html`.
+
+### One page per show
+
+`PROGRAMS` in `build.py` is now the single source for the lineup — the old
+`SIGNATURE` list was a second, drifting copy of it and has been deleted (it
+carried the Golf & Travel Show's blurb on Alex Donner's entry). 14 shows each
+get `show-<slug>.html` with hero, an on-air-right-now badge computed in station
+time, host block, episode archive, video, and related shows.
+
+### Audio
+
+A custom episode player, not `<audio controls>`. Starting an episode stops the
+live stream and vice versa — only one thing ever plays. The `playing` state is
+set by the audio element's own event, so a file that never loads shows a loading
+then an error state rather than pretending to play.
+
+Real media only: three full-show MP3s on *Legends International* and the
+SoundCloud interviews on *Sunday Legends Brunch* / *Legends of the Palm Beaches*.
+**Every other show gets a designed empty state** — no episode lists were
+invented. SoundCloud loads behind a click-to-load facade.
+
+### Video
+
+`video.html` plus per-show sections. Titles and channels are what YouTube's own
+oEmbed returns. Clips use a **click-to-load facade** — no YouTube iframe and no
+Google request until the visitor presses play, then `youtube-nocookie.com`.
+Sponsor-owned clips are labelled as such.
+
+### The calendar that updates itself
+
+`events.html` is rendered twice:
+
+1. **Build time** — `assets/data/events.json`, a snapshot of the station's own
+   Events Calendar REST API. This is the floor: correct with JS off, for
+   crawlers, and when the API is down.
+2. **Runtime** — the page re-fetches the live API and reconciles, then says so
+   ("Live from the station calendar · updated just now"). If the fetch fails it
+   says *that* instead, and keeps the snapshot.
+
+Plus a countdown to the next event and an "Around the Palm Beaches" rail linking
+each partner venue's own calendar — we never republish another organisation's
+listings.
+
+### Fixed along the way
+- `SIGNATURE` carried the wrong blurb on Alex Donner (see above), and
+  *The Sounds of Sinatra* linked to `thegolfandtravelshow.com` — a show removed
+  as not-current in 2026-08.
+- The global list reset covered `ul` but not `ol`, so the new episode, event and
+  playlist lists rendered their numbering.
+- Adding a nav item pushed the header past its container at every desktop width
+  (the row needs ~1333px; the body grid caps at 1220). The header now has its own
+  container and hands over to the drawer at 1280px.
+- Meta descriptions are clamped to snippet length in `document()`, on a word
+  boundary, so this can't drift again.
+- `role="presentation"` on the month separators made the event `<ol>` read as
+  containing non-list children; inline links in running text were signalled by
+  colour alone (WCAG 1.4.1).
+
+### Verified this run
+- **axe (WCAG 2.0/2.1/2.2 A + AA): 0 violations** — all 25 pages × desktop + mobile
+- **CLS** 0.0003–0.046, **LCP** 184–1500ms (local server; re-measure on Vercel)
+- Nav fits with no overflow at 390 / 768 / 1024 / 1279 / 1281 / 1366 / 1440 / 1600 / 1920
+- Playlist grid never ends ragged (12 items across 3 / 2 / 1 columns)
+- Live feeds exercised against real captured payloads, including the blank-feed
+  ad-break path and the no-cover-art path
+- Links, assets, alt text, `<h1>` counts, meta, JSON-LD and sitemap: clean
+
+### Owner to-dos
+- **Show blurbs** are descriptive rather than sourced — have the station approve
+  the wording, especially Alex Donner's and Bob Merrill's.
+- **Weekend slot times** for Legends of Jazz, Cindy on Legends, Sounds of Sinatra
+  and Sunday Legends Brunch still read "See schedule" — the station does not
+  publish them.
+- **The archive is thin** because only four MP3s and a handful of SoundCloud
+  posts exist publicly. Point `PROGRAMS[*]["audio"]` at a real feed and the
+  empty states fill themselves in.

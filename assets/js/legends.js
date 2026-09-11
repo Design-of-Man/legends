@@ -288,6 +288,342 @@
     drawRail();
   }
 
+
+  /* ==================================================================== */
+  /*  LIVE NOW PLAYING — track + album art                                */
+  /*                                                                      */
+  /*  Both feeds come from SecureNetSystems, the station's own streaming   */
+  /*  vendor, and both send Access-Control-Allow-Origin, so the browser    */
+  /*  reads them directly. WLML.xml is the current item and goes blank     */
+  /*  during ad breaks and talk, so we fall back to the head of the        */
+  /*  history feed. Cover art is absent on roughly 40% of tracks — the     */
+  /*  spinning vinyl is the designed fallback, never a broken image.       */
+  /* ==================================================================== */
+  var NP_URL = window.LEGENDS_NOWPLAYING || "";
+  var HIST_URL = window.LEGENDS_HISTORY || "";
+
+  function xmlText(node, tag) {
+    var el = node.getElementsByTagName(tag)[0];
+    return el && el.textContent ? el.textContent.trim() : "";
+  }
+  function parseSongs(text) {
+    var doc;
+    try { doc = new DOMParser().parseFromString(text, "text/xml"); } catch (e) { return []; }
+    if (!doc || doc.getElementsByTagName("parsererror").length) return [];
+    var nodes = doc.getElementsByTagName("song");
+    if (!nodes.length) nodes = doc.getElementsByTagName("playlist");
+    var out = [];
+    for (var i = 0; i < nodes.length; i++) {
+      var t = xmlText(nodes[i], "title"), a = xmlText(nodes[i], "artist");
+      if (!t && !a) continue;                       // blank = ad break or talk
+      out.push({
+        title: t, artist: a,
+        album: xmlText(nodes[i], "album"),
+        cover: xmlText(nodes[i], "cover"),
+        at: xmlText(nodes[i], "programStartTS")
+      });
+    }
+    return out;
+  }
+  function getXML(url) {
+    if (!url || !window.fetch) return Promise.reject();
+    return fetch(url, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error(r.status);
+      return r.text();
+    });
+  }
+
+  /* Paint one art slot: real cover when we have it, vinyl when we don't. */
+  function paintArt(scope, song) {
+    $$("[data-art]", scope || document).forEach(function (slot) {
+      var img = $("[data-art-img]", slot), fb = $("[data-art-fallback]", slot);
+      if (!img || !fb) return;
+      if (song && song.cover) {
+        if (img.getAttribute("src") !== song.cover) {
+          img.onerror = function () { img.hidden = true; fb.hidden = false; slot.classList.remove("has-art"); };
+          img.setAttribute("src", song.cover);
+        }
+        img.alt = song.album ? (song.album + " — " + song.artist) : song.artist;
+        img.hidden = false; fb.hidden = true; slot.classList.add("has-art");
+      } else {
+        img.hidden = true; img.removeAttribute("src"); fb.hidden = false;
+        slot.classList.remove("has-art");
+      }
+    });
+  }
+
+  var curSong = null;
+  function paintTrack(song) {
+    curSong = song;
+    paintArt(document, song);
+    $$("[data-track]").forEach(function (row) {
+      var t = $("[data-track-title]", row), a = $("[data-track-artist]", row);
+      if (song) {
+        if (t) t.textContent = song.title;
+        if (a) a.textContent = song.artist ? " · " + song.artist : "";
+        row.hidden = false;
+      } else { row.hidden = true; }
+    });
+    if (song && "mediaSession" in navigator) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: song.title, artist: song.artist,
+          album: song.album || "Legends Radio 100.3 FM",
+          artwork: [{ src: song.cover || (window.LEGENDS_ARTWORK || ""), sizes: "512x512" }]
+        });
+      } catch (e) {}
+    }
+  }
+
+  var playedList = $("[data-played]");
+  function renderPlayed(songs) {
+    if (!playedList) return;
+    var limit = parseInt(playedList.dataset.playedLimit || "12", 10);
+    var rows = songs.slice(0, limit);
+    if (!rows.length) return;
+    playedList.innerHTML = rows.map(function (s, i) {
+      var art = s.cover
+        ? '<img class="pl-art" src="' + s.cover + '" alt="" width="56" height="56" loading="lazy">'
+        : '<span class="pl-art pl-art-none" aria-hidden="true"></span>';
+      var when = (s.at || "").split(" ").slice(3).join(" ").slice(0, 5);
+      return '<li class="played-row' + (i === 0 ? " is-current" : "") + '">' + art +
+        '<span class="pl-meta"><b>' + esc(s.title) + '</b><span>' + esc(s.artist) + '</span></span>' +
+        (when ? '<time class="pl-when">' + esc(when) + '</time>' : "") + '</li>';
+    }).join("");
+  }
+  function esc(t) { var d = document.createElement("div"); d.textContent = t == null ? "" : t; return d.innerHTML; }
+
+  function refreshNowPlaying() {
+    if (document.hidden) return;
+    getXML(NP_URL).then(function (txt) {
+      var cur = parseSongs(txt)[0];
+      if (cur) { paintTrack(cur); return null; }
+      return getXML(HIST_URL).then(function (h) { paintTrack(parseSongs(h)[0] || null); return null; });
+    }).catch(function () { /* leave the show card as-is; never surface a stack trace */ });
+
+    if (playedList) {
+      getXML(HIST_URL).then(function (h) {
+        var songs = parseSongs(h);
+        renderPlayed(songs);
+        if (!curSong && songs[0]) paintTrack(songs[0]);
+      }).catch(function () {
+        var e = $("[data-played-empty]");
+        if (e) e.textContent = "The playlist is taking a breath — tune to 100.3 FM to hear what's on.";
+      });
+    }
+  }
+  if (NP_URL) {
+    refreshNowPlaying();
+    setInterval(refreshNowPlaying, 30000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshNowPlaying(); });
+  }
+
+  /* ==================================================================== */
+  /*  EPISODE PLAYER                                                      */
+  /*  Only one thing plays at a time: starting an episode stops the live   */
+  /*  stream, and starting the live stream stops the episode.             */
+  /* ==================================================================== */
+  var epAudio = null, epCurrent = null;
+  function epStopAll() {
+    if (epAudio) { epAudio.pause(); }
+    $$("[data-episode]").forEach(function (li) {
+      li.classList.remove("playing"); li.classList.remove("loading");
+    });
+  }
+  function mmss(s) {
+    if (!isFinite(s) || s < 0) return "0:00";
+    var m = Math.floor(s / 60), r = Math.floor(s % 60);
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+  $$("[data-episode]").forEach(function (li) {
+    var btn = $("[data-ep-play]", li), rail = $("[data-ep-rail]", li),
+        fill = $("[data-ep-fill]", li), now = $("[data-ep-now]", li), dur = $("[data-ep-dur]", li);
+    function ensure() {
+      if (!epAudio) {
+        epAudio = new Audio();
+        epAudio.preload = "metadata";
+        epAudio.addEventListener("timeupdate", function () {
+          if (!epCurrent) return;
+          var f = $("[data-ep-fill]", epCurrent), n = $("[data-ep-now]", epCurrent);
+          var pct = epAudio.duration ? (epAudio.currentTime / epAudio.duration) * 100 : 0;
+          if (f) f.style.width = pct + "%";
+          if (n) n.textContent = mmss(epAudio.currentTime);
+        });
+        epAudio.addEventListener("loadedmetadata", function () {
+          if (!epCurrent) return;
+          var d = $("[data-ep-dur]", epCurrent);
+          if (d) d.textContent = mmss(epAudio.duration);
+        });
+        epAudio.addEventListener("playing", function () {
+          if (!epCurrent) return;
+          epCurrent.classList.remove("loading");
+          epCurrent.classList.add("playing");
+        });
+        epAudio.addEventListener("waiting", function () {
+          if (epCurrent) epCurrent.classList.add("loading");
+        });
+        epAudio.addEventListener("ended", function () { epStopAll(); epCurrent = null; });
+        epAudio.addEventListener("error", function () {
+          var failed = epCurrent;
+          epStopAll();
+          if (failed) failed.classList.add("ep-error");
+        });
+      }
+    }
+    if (btn) btn.addEventListener("click", function () {
+      ensure();
+      var isMe = epCurrent === li && !epAudio.paused;
+      epStopAll();
+      if (isMe) { epCurrent = null; return; }
+      pause();                                   // hand the floor over from the live stream
+      if (epCurrent !== li) { epAudio.src = li.dataset.src; epCurrent = li; }
+      li.classList.remove("ep-error");
+      li.classList.add("loading");          // 'playing' is set by the audio element itself
+      var pr = epAudio.play();
+      if (pr && pr.catch) pr.catch(function () { epStopAll(); li.classList.add("ep-error"); });
+    });
+    if (rail) rail.addEventListener("click", function (e) {
+      if (epCurrent !== li || !epAudio || !epAudio.duration) return;
+      var r = rail.getBoundingClientRect();
+      epAudio.currentTime = ((e.clientX - r.left) / r.width) * epAudio.duration;
+    });
+    if (dur) dur.textContent = "––";
+  });
+  // The live stream reclaims the floor whenever it starts.
+  if (audio) audio.addEventListener("playing", function () { if (epAudio) { epAudio.pause(); epStopAll(); } });
+
+  /* -------- SoundCloud: widget only once the visitor asks for it -------- */
+  $$("[data-sc-load]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var li = btn.closest(".episode"); if (!li || li.dataset.loaded) return;
+      pause();
+      var f = document.createElement("iframe");
+      f.src = btn.dataset.scUrl + "&auto_play=true";
+      f.title = btn.getAttribute("aria-label") || "SoundCloud player";
+      f.width = "100%"; f.height = "120"; f.frameBorder = "0";
+      f.allow = "autoplay"; f.loading = "lazy";
+      f.className = "ep-embed";
+      li.appendChild(f); li.dataset.loaded = "1"; li.classList.add("loaded");
+      btn.setAttribute("aria-expanded", "true");
+    });
+  });
+
+  /* -------- YouTube: facade until pressed, then the real embed --------- */
+  $$("[data-video]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var card = btn.parentNode, id = btn.dataset.video;
+      pause();
+      var f = document.createElement("iframe");
+      f.src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1&rel=0";
+      f.title = btn.getAttribute("aria-label") || "Video";
+      f.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
+      f.allowFullscreen = true; f.className = "vid-frame"; f.loading = "lazy";
+      card.replaceChild(f, btn);
+    });
+  });
+
+  /* ==================================================================== */
+  /*  EVENTS — the page keeps itself current                              */
+  /*  The server-rendered list is the floor; this reconciles it against    */
+  /*  the station's own calendar while the page is open.                   */
+  /* ==================================================================== */
+  var evStatus = $("[data-ev-status]"), evList = $("[data-ev-list]");
+  function evClean(txt) {
+    return (txt || "").replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/^[A-Z][a-z]+ \d{1,2}:\s*/, "")
+      .split("Optional Reserved Seats")[0]
+      .split("All concerts begin")[0]
+      .trim().slice(0, 200);
+  }
+  function evRender(list) {
+    var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    var FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var seen = null, html_ = "";
+    list.forEach(function (e, i) {
+      var d = new Date(e.start.replace(" ", "T"));
+      if (isNaN(d)) return;
+      var m = FULL[d.getMonth()] + " " + d.getFullYear();
+      if (m !== seen) { seen = m; html_ += '<li class="ev-month"><span>' + esc(m) + '</span></li>'; }
+      var hr = d.getHours(), ap = hr >= 12 ? "PM" : "AM", h12 = hr % 12 || 12;
+      var mins = d.getMinutes();
+      var time = e.all_day ? "All day" : h12 + ":" + (mins < 10 ? "0" : "") + mins + " " + ap;
+      html_ += '<li class="ev reveal in reveal-d' + (i % 4) + '" data-ev-start="' + esc(e.start) + '">' +
+        '<time class="ev-date" datetime="' + d.toISOString() + '">' +
+          '<span class="ev-mon">' + MON[d.getMonth()] + '</span>' +
+          '<span class="ev-day">' + d.getDate() + '</span>' +
+          '<span class="ev-dow">' + DOW[d.getDay()] + '</span></time>' +
+        '<div class="ev-body"><h3 class="ev-title"><a href="' + esc(e.url) + '" target="_blank" rel="noopener">' +
+          esc(e.title) + '</a></h3>' +
+        '<p class="ev-meta">' + esc(time) + '<span class="ev-dot">·</span>' + esc(e.venue || "Venue TBA") + '</p>' +
+        '<p class="ev-where">' + esc(e.address || "") + '</p></div>' +
+        '<span class="ev-cost">' + esc(e.cost || "Free") + '</span></li>';
+    });
+    if (!html_) html_ = '<li class="ev-empty">No dates on the calendar right now — new concerts are announced on the air first.</li>';
+    evList.innerHTML = html_;
+  }
+  function evCountdown() {
+    var box = $("[data-ev-countdown]"); if (!box) return;
+    var first = $(".ev[data-ev-start]", evList || document);
+    if (!first) { box.hidden = true; return; }
+    var when = new Date(first.dataset.evStart.replace(" ", "T"));
+    var title = $(".ev-title", first);
+    var nm = $("[data-cd-name]", box), ck = $("[data-cd-clock]", box);
+    function tick() {
+      var ms = when - new Date();
+      if (isNaN(ms) || ms <= 0) { box.hidden = true; return; }
+      var d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), mi = Math.floor(ms % 36e5 / 6e4);
+      ck.textContent = (d ? d + (d === 1 ? " day " : " days ") : "") + h + "h " + mi + "m";
+      box.hidden = false;
+    }
+    if (nm && title) nm.textContent = title.textContent;
+    tick(); setInterval(tick, 60000);
+  }
+  if (evList && evStatus && window.fetch) {
+    var endpoint = evStatus.dataset.evEndpoint;
+    var statusText = $("[data-ev-status-text]", evStatus);
+    fetch(endpoint, { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) {
+        var list = (d.events || []).map(function (e) {
+          var v = e.venue || {};
+          return {
+            start: e.start_date, all_day: !!e.all_day, url: e.url,
+            title: (e.title || "").replace(/&#(\d+);/g, function (_, n) { return String.fromCharCode(n); })
+                     .replace(/&amp;/g, "&").replace(/&#8217;/g, "’"),
+            cost: (e.cost || "").trim(),
+            venue: v.venue || "",
+            address: [v.address, v.city, v.state, v.zip].filter(Boolean).join(" "),
+            blurb: evClean(e.description || e.excerpt)
+          };
+        }).filter(function (e) { return e.start; })
+          .sort(function (a, b) { return a.start < b.start ? -1 : 1; });
+        evRender(list);
+        evStatus.classList.add("is-live");
+        if (statusText) statusText.textContent = "Live from the station calendar · updated just now";
+        evCountdown();
+      })
+      .catch(function () {
+        evStatus.classList.add("is-cached");
+        if (statusText) statusText.textContent = "Showing the last saved schedule — the live calendar didn't answer";
+        evCountdown();
+      });
+  } else if (evList) { evCountdown(); }
+
+  /* ---------------- show page: is this programme on right now? --------- */
+  var showLive = $("[data-show-live]");
+  if (showLive && Object.keys(SCHEDULE).length) {
+    var showHero = showLive.closest("[data-show]");
+    var wanted = showHero ? (showHero.dataset.show || "").toLowerCase() : "";
+    var checkLive = function () {
+      var cur = currentSlot();
+      var on = !!(cur && wanted && (cur.slot.show || "").toLowerCase().indexOf(wanted.slice(0, 18)) > -1);
+      showLive.hidden = !on;
+    };
+    checkLive(); setInterval(checkLive, 30000);
+  }
+
   /* --------------------------------------------------- footer year + boot */
   var y = $("#year"); if (y) y.textContent = new Date().getFullYear();
   reflectUI();

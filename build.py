@@ -13,7 +13,7 @@ Facts are grounded in public sources (WLML-FM / legendsradio.com). Programming
 blocks that aren't publicly confirmed are descriptive music blocks, not invented
 hosted shows — see OWNER TO-DOS at the bottom of this file.
 """
-import hashlib, json, os, datetime, html
+import hashlib, json, os, re, datetime, html
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 BASE = "https://www.legendsradio.com"   # canonical production home (see OWNER TO-DOS)
@@ -95,6 +95,204 @@ ARTISTS = ["Frank Sinatra", "Ella Fitzgerald", "Tony Bennett", "Dean Martin", "N
 #
 # (group heading, group standfirst, [(name, url, kicker, line), …])
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# PROGRAMS — one page per show.
+#
+# Slots and hosts are the station's own (its weekday lineup graphic and the
+# programme entries in its primary nav). Blurbs are descriptive, not invented
+# credentials. `audio` and `video` carry only media that actually exists on the
+# station's own properties; every other show gets a designed empty state rather
+# than a fabricated episode list.
+# ---------------------------------------------------------------------------
+PROGRAMS = [
+    # ---- Weekdays --------------------------------------------------------
+    {"slug": "the-morning-lounge", "name": "The Morning Lounge", "kind": "Weekdays",
+     "host": "Jill & Rich Switzer", "host_slug": "jill-rich-switzer",
+     "slot": "Weekdays · 6–10 AM", "days": "Mon–Fri", "time": "6:00 – 10:00 AM",
+     "blurb": "Wake up in the Palm Beaches with live music, warm conversation and the Songbook's "
+              "brightest mornings — two working musicians at the top of the day.",
+     "audio": [], "video": []},
+
+    {"slug": "middays-with-mike-mcgann", "name": "Middays with Mike McGann", "kind": "Weekdays",
+     "host": "Mike McGann", "host_slug": "mike-mcgann",
+     "slot": "Weekdays · 10 AM – 2 PM", "days": "Mon–Fri", "time": "10:00 AM – 2:00 PM",
+     "blurb": "The full music library, wide open — plus <em>Legends at Lunch</em> every weekday "
+              "at noon, a midday set of the greatest recordings ever made.",
+     "audio": [], "video": []},
+
+    {"slug": "legends-afternoons", "name": "Legends Afternoons", "kind": "Weekdays",
+     "host": "Steve Ketelaar", "host_slug": "steve-ketelaar",
+     "slot": "Weekdays · 2–7 PM", "days": "Mon–Fri", "time": "2:00 – 7:00 PM",
+     "blurb": "Timeless company from the middle of the afternoon through the golden-hour drive "
+              "home across the Palm Beaches.",
+     "audio": [], "video": []},
+
+    {"slug": "evenings-with-alex-donner", "name": "Evenings with Alex Donner", "kind": "Weekdays",
+     "host": "Alex Donner", "host_slug": "alex-donner",
+     "slot": "Weekdays · 7–9 PM", "days": "Mon–Fri", "time": "7:00 – 9:00 PM",
+     "blurb": "Supper-club standards for the front end of the night, hosted by the New York "
+              "bandleader who has played more society rooms than most orchestras see in a decade.",
+     "audio": [], "video": []},
+
+    {"slug": "legends-after-dark", "name": "Legends After Dark", "kind": "Weekdays",
+     "host": "Bob Merrill", "host_slug": "bob-merrill",
+     "slot": "Weeknights · 9–11 PM", "days": "Mon–Fri", "time": "9:00 – 11:00 PM",
+     "blurb": "The lights go down and the arrangements stretch out — late standards to carry the "
+              "evening toward the small hours.",
+     "audio": [], "video": []},
+
+    {"slug": "american-standards-by-the-sea", "name": "American Standards by the Sea", "kind": "Weekdays",
+     "host": "Dick Robinson", "host_slug": "dick-robinson",
+     "slot": "Weeknights 11 PM · Sat 6–8 PM · Sun 10 AM", "days": "Nightly & weekends",
+     "time": "Weeknights 11 PM – 1 AM · Sat 6–8 PM · Sun 10 AM – 12 PM",
+     "blurb": "The station founder's internationally syndicated salute to Sinatra, Bennett, "
+              "Streisand and the rest — produced in part aboard his yacht <em>Airwaves</em> and "
+              "carried on 75+ stations nationwide.",
+     "audio": [], "video": []},
+
+    # ---- Weekends --------------------------------------------------------
+    {"slug": "legends-of-jazz", "name": "Legends of Jazz", "kind": "Weekends",
+     "host": "Gregory “Popeye” Alexander", "host_slug": "popeye-alexander",
+     "slot": "Weekly · See schedule", "days": "Weekly", "time": "See schedule",
+     "blurb": "The Songbook's cooler, smokier side — jazz vocals and instrumentals with a real "
+              "player at the helm.",
+     "audio": [], "video": []},
+
+    {"slug": "sunday-legends-brunch", "name": "Sunday Legends Brunch", "kind": "Weekends",
+     "host": "Bob Merrill", "host_slug": "bob-merrill",
+     "slot": "Sundays", "days": "Sunday", "time": "See schedule",
+     "blurb": "Sunday late morning with a long table, a longer playlist and the occasional "
+              "remarkable guest.",
+     "audio": [
+        {"kind": "soundcloud", "title": "Sunday Legends Brunch — Ken Langone",
+         "url": "https://soundcloud.com/legendsradio/sunday-brunch-ken-langone",
+         "note": "The Home Depot co-founder in conversation."},
+        {"kind": "soundcloud", "title": "Sunday Legends Brunch — Dick Robinson",
+         "url": "https://soundcloud.com/legendsradio/sunday-legends-brunch-dick-robinson",
+         "note": "The station's founder on the Songbook and the Palm Beaches."},
+     ], "video": []},
+
+    {"slug": "cindy-on-legends", "name": "Cindy on Legends", "kind": "Weekends",
+     "host": "Cindy Hite", "host_slug": "cindy-hite",
+     "slot": "Weekly · See schedule", "days": "Weekly", "time": "See schedule",
+     "blurb": "Uplifting conversation and guests — a reminder that Legends is about companionship "
+              "as much as it is about music.",
+     "audio": [], "video": []},
+
+    {"slug": "the-sounds-of-sinatra", "name": "The Sounds of Sinatra", "kind": "Weekends",
+     "host": "Legends 100.3", "host_slug": None,
+     "slot": "Weekly · See schedule", "days": "Weekly", "time": "See schedule",
+     "blurb": "The Chairman of the Board, hour after hour — the Sinatra catalogue as only a "
+              "Songbook station plays it.",
+     "audio": [], "video": []},
+
+    {"slug": "community-focus", "name": "Legends Community Focus", "kind": "Weekends",
+     "host": "Mike McGann", "host_slug": "mike-mcgann",
+     "slot": "Sundays · 6 AM", "days": "Sunday", "time": "6:00 AM",
+     "blurb": "A half-hour public-affairs programme on the issues that reach Palm Beach County — "
+              "health, preparedness and the causes the station champions. Non-profits can submit "
+              "a public service announcement for the free on-air rotation.",
+     "audio": [], "video": []},
+
+    {"slug": "pain-2-power", "name": "Pain 2 Power", "kind": "Weekends",
+     "host": "Mike McCannon & David Kashuba", "host_slug": None,
+     "slot": "Saturdays · 8:30 AM", "days": "Saturday", "time": "8:30 AM",
+     "blurb": "A weekly half-hour on health, healing and the mindset that turns pain into power — "
+              "Legends' hometown wellness slot.",
+     "audio": [], "video": []},
+
+    # ---- From the archive -------------------------------------------------
+    {"slug": "legends-international", "name": "Legends International", "kind": "Archive",
+     "host": "Philippe Harari", "host_slug": None,
+     "slot": "From the archive", "days": "Archive", "time": "Full shows, 2023",
+     "blurb": "Full-length shows from the station's international hour, kept online in their "
+              "entirety.",
+     "audio": [
+        {"kind": "mp3", "title": "Full Show — 20 May 2023", "date": "2023-05-20",
+         "url": "https://legendsradio.com/wp-content/uploads/2024/05/Legends-May-20-2023-Full-Show.mp3"},
+        {"kind": "mp3", "title": "Full Show — 26 August 2023", "date": "2023-08-26",
+         "url": "https://legendsradio.com/wp-content/uploads/2024/05/Legends-Aug-26-2023-Full-Show.mp3"},
+        {"kind": "mp3", "title": "Veterans Day Full Show — 11 November 2023", "date": "2023-11-11",
+         "url": "https://legendsradio.com/wp-content/uploads/2024/05/Legends-Nov-11-2023-Veterans-Day-Full-Show.mp3"},
+     ], "video": []},
+
+    {"slug": "legends-of-the-palm-beaches", "name": "Legends of the Palm Beaches", "kind": "Archive",
+     "host": "Legends 100.3", "host_slug": None,
+     "slot": "From the archive", "days": "Archive", "time": "Interview series",
+     "blurb": "Conversations with the people who made the Palm Beaches what they are.",
+     "audio": [
+        {"kind": "soundcloud", "title": "Ken Langone",
+         "url": "https://soundcloud.com/legendsradio/sunday-brunch-ken-langone",
+         "note": "Co-founder of The Home Depot."},
+        {"kind": "soundcloud", "title": "Dick Robinson",
+         "url": "https://soundcloud.com/legendsradio/sunday-legends-brunch-dick-robinson",
+         "note": "Founder of Legends Radio."},
+     ], "video": []},
+]
+
+# ---------------------------------------------------------------------------
+# VIDEO — real embeds found on the station's own pages. Titles and channels are
+# the ones YouTube itself returns via oEmbed; nothing here is invented.
+# `sponsor` marks a clip that belongs to a sponsor's channel rather than the
+# station's, so the page can say so plainly.
+# ---------------------------------------------------------------------------
+VIDEOS = [
+    {"id": "WYvRJMJh69I", "title": "Deborah Silver and Freddy Cole — Orange Colored Sky",
+     "sub": "Behind the scenes", "channel": "Deborah Silver Music", "group": "In the studio"},
+    {"id": "gf5o4x4i6dI", "title": "Ballin’ the Jack — a duet with Ray Benson",
+     "sub": "Deborah Silver", "channel": "Deborah Silver Music", "group": "In the studio"},
+    {"id": "E5z7g_Tx1A0", "title": "Behind the scenes with Ray Benson and friends",
+     "sub": "Recording <em>Glitter &amp; Grits</em>", "channel": "Deborah Silver Music", "group": "In the studio"},
+    {"id": "wx-9Vd4hQkY", "title": "That Old Black Magic",
+     "sub": "Lyric video", "channel": "Deborah Silver Music", "group": "In the studio"},
+    {"id": "BfKB3uJb6sE", "title": "Crash Proof Retirement",
+     "sub": "Sponsored programming", "channel": "Crash Proof Retirement", "group": "From our sponsors",
+     "sponsor": True},
+]
+
+# Palm Beach venues the station keeps company with. Each links to that venue's
+# own calendar — we never republish another organisation's listings.
+VENUES = [
+    ("The Society of the Four Arts", "https://www.fourarts.org/", "Palm Beach"),
+    ("Kravis Center for the Performing Arts", "https://www.kravis.org/", "West Palm Beach"),
+    ("Palm Beach Symphony", "https://www.palmbeachsymphony.org/", "West Palm Beach"),
+    ("Maltz Jupiter Theatre", "https://www.jupitertheatre.org/", "Jupiter"),
+    ("The Pops Orchestra of the Palm Beaches", "https://www.popsorchestrapalmbeaches.com/", "The Palm Beaches"),
+    ("Palm Beach Dramaworks", "https://www.palmbeachdramaworks.org/", "West Palm Beach"),
+    ("Sunrise Theatre", "https://www.sunrisetheatre.com/", "Fort Pierce"),
+]
+
+PROGRAM_BY_SLUG = {p["slug"]: p for p in PROGRAMS}
+
+def program_file(slug):
+    return "show-%s.html" % slug
+
+# ---------------------------------------------------------------------------
+# Live data endpoints (both send Access-Control-Allow-Origin, so the browser
+# can read them directly — no backend, no proxy).
+#   NOW_PLAYING  current item; goes blank during ad breaks and talk
+#   PLAY_HISTORY last 30 songs, newest first, most carrying cover art
+#   EVENTS_API   the station's own Events Calendar
+# ---------------------------------------------------------------------------
+NOW_PLAYING_URL = "https://streamdb5web.securenetsystems.net/player_status_update/WLML.xml"
+PLAY_HISTORY_URL = "https://streamdb5web.securenetsystems.net/player_status_update/WLML_history.xml"
+EVENTS_API = "https://legendsradio.com/wp-json/tribe/events/v1/events?per_page=50"
+
+def load_events():
+    """Build-time snapshot of the station's calendar.
+
+    The page re-fetches EVENTS_API in the browser and reconciles, so this is the
+    floor rather than the ceiling: it keeps the page correct with JS off, for
+    crawlers, and when the API is unreachable.
+    """
+    path = os.path.join(ROOT, "assets", "data", "events.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return {"fetched": None, "events": []}
+
+
 PATRONS = [
     ("Friends of Legends",
      "Presenting partners, carried in the house colours on every page of the station.",
@@ -276,31 +474,9 @@ SCHEDULE = {
 DAYS = [("0", "Sun"), ("1", "Mon"), ("2", "Tue"), ("3", "Wed"), ("4", "Thu"), ("5", "Fri"), ("6", "Sat")]
 
 # Signature / specialty programs (for Shows page cards)
-SIGNATURE = [
-    {"name": "The Morning Lounge", "host": "Jill & Rich Switzer", "slot": "Weekdays · 6–10 AM",
-     "blurb": "Wake up in the Palm Beaches with live music, warm conversation, and the Songbook's brightest mornings."},
-    {"name": "Middays with Mike McGann", "host": "Mike McGann", "slot": "Weekdays · 10 AM–2 PM",
-     "blurb": "The full music library, wide open — plus the daily Legends at Lunch at noon."},
-    {"name": "Legends Afternoons with Steve Ketelaar", "host": "Steve Ketelaar", "slot": "Weekdays · 2–7 PM",
-     "blurb": "Timeless company from the afternoon through the golden-hour drive home."},
-    {"name": "American Standards by the Sea", "host": "Dick Robinson", "slot": "Sat 6–8 PM · Sun 10 AM–12 PM",
-     "blurb": "Dick Robinson's internationally-syndicated salute to Sinatra, Bennett, Streisand and more — produced in part aboard his yacht <em>Airwaves</em> and heard on 75+ stations."},
-    {"name": "Legends of Jazz", "host": "Gregory “Popeye” Alexander", "slot": "Sundays · 8–10 PM",
-     "blurb": "The Songbook's cooler, smokier side — jazz vocals and instrumentals with a real player at the helm."},
-    {"name": "Evenings with Alex Donner", "host": "Alex Donner", "slot": "Weekdays · 7–9 PM",
-     "blurb": "Destinations, equipment, and expert interviews for the golfer and traveler in all of us."},
-    {"name": "Legends After Dark", "host": "Bob Merrill", "slot": "Weeknights · 9–11 PM",
-     "blurb": "Encore hours of American Standards by the Sea to carry you into the small hours."},
-    {"name": "Cindy on Legends", "host": "Cindy Hite", "slot": "Weekly · See schedule",
-     "blurb": "Uplifting conversation and guests — a reminder that Legends is about companionship as much as music."},
-    {"name": "Pain 2 Power", "host": "Mike McCannon & David Kashuba", "slot": "Saturdays · 8:30 AM",
-     "blurb": "A weekly dose of health, healing, and the mindset to turn pain into power — Legends' hometown wellness half-hour."},
-    {"name": "Legends at Lunch", "host": "Daily at noon", "slot": "Weekdays · 12 PM",
-     "blurb": "A midday set of the greatest recordings ever made — the perfect soundtrack to your lunch hour."},
-]
 
-NAV = [("index.html", "Home"), ("listen.html", "Listen Live"), ("shows.html", "Shows"),
-       ("hosts.html", "On-Air"), ("podcast.html", "On-Demand"), ("events.html", "Events"),
+NAV = [("index.html", "Home"), ("listen.html", "Listen"), ("shows.html", "Shows"),
+       ("hosts.html", "On-Air"), ("podcast.html", "On-Demand"), ("video.html", "Video"), ("events.html", "Events"),
        ("about.html", "About"), ("advertise.html", "Advertise"), ("contact.html", "Contact")]
 
 # ---------------------------------------------------------------------------
@@ -399,7 +575,7 @@ def player():
         '<button class="player-play" data-play aria-pressed="false" aria-label="Play or pause the live stream">'
         '<span class="ic-play">' + IC["play"] + '</span><span class="ic-pause">' + IC["pause"] + '</span>'
         '</button>'
-        '<div class="vinyl-wrap player-vinyl"><div class="vinyl" style="--s:52px"></div><div class="sheen"></div></div>'
+        + art_slot(52, "player-art") +
         '<div class="player-meta">'
         '<span class="p-live"><span class="dot-live"></span> On Air Now</span>'
         '<span class="p-show">Nonstop Legends</span>'
@@ -507,8 +683,9 @@ def breadcrumb(title, filename):
 def jsonld(*nodes):
     graph = [org_schema()]
     for n in nodes:
-        if n:
-            graph.append(n)
+        if not n:
+            continue
+        graph.extend(n) if isinstance(n, list) else graph.append(n)
     doc = {"@context": "https://schema.org", "@graph": graph}
     return '<script type="application/ld+json">%s</script>' % json.dumps(doc, ensure_ascii=False)
 
@@ -519,6 +696,8 @@ CSS_V = None
 JS_V = None
 
 def document(filename, title, desc, body, active, extra_schema=None, og_image="legends-og.png"):
+    # One place to guarantee every page ships a snippet-length description.
+    desc = clamp_desc(desc)
     canonical = BASE + "/" + ("" if filename == "index.html" else filename)
     og_url = BASE + "/assets/img/" + og_image
     sched_json = json.dumps({str(k): v for k, v in SCHEDULE.items()}, ensure_ascii=False)
@@ -527,6 +706,8 @@ def document(filename, title, desc, body, active, extra_schema=None, og_image="l
         "window.LEGENDS_STREAM=" + json.dumps(STATION["stream"]) + ";"
         "window.LEGENDS_POPOUT=" + json.dumps(STATION["popout"]) + ";"
         "window.LEGENDS_ARTWORK=" + json.dumps(BASE + "/assets/img/legends-artwork.png") + ";"
+        "window.LEGENDS_NOWPLAYING=" + json.dumps(NOW_PLAYING_URL) + ";"
+        "window.LEGENDS_HISTORY=" + json.dumps(PLAY_HISTORY_URL) + ";"
     )
     schema = jsonld(breadcrumb(title.split(" | ")[0], filename) if filename != "index.html" else None,
                     extra_schema)
@@ -669,7 +850,7 @@ ON_DEMAND = [
      "cta": "Browse the archive", "url": STATION["soundcloud"]},
     {"title": "The Sounds of Sinatra", "host": "Legends 100.3", "icon": "mic",
      "blurb": "The Chairman of the Board, hour after hour — the Sinatra songbook as only Legends plays it.",
-     "cta": "Visit the show", "url": "https://thegolfandtravelshow.com/"},
+     "cta": "Visit the show", "url": "show-the-sounds-of-sinatra.html"},
     {"title": "Cindy on Legends", "host": "Cindy Hite", "icon": "heart",
      "blurb": "Cindy Hite's programme on Legends 100.3, available to stream between broadcasts.",
      "cta": "Follow on SoundCloud", "url": STATION["soundcloud"]},
@@ -692,15 +873,24 @@ def host_card(h, idx=0, full=False):
          html.escape(h["show"]), html.escape(h["slot"]), bio)
 
 def show_card(sig, idx=0):
-    return (
-        '<article class="card reveal reveal-d%d">'
+    """Card for one programme. Links through to that show's own page when it
+    has one (every entry in PROGRAMS does)."""
+    href = program_file(sig["slug"]) if sig.get("slug") else None
+    inner = (
         '<span class="pill">%s</span>'
         '<h3 style="margin:.9rem 0 .3rem">%s</h3>'
         '<p style="color:var(--gold);font-weight:600;font-size:.92rem;margin-bottom:.6rem">%s</p>'
         '<p style="color:var(--muted);font-size:.95rem">%s</p>'
-        '</article>'
-    ) % (idx % 4, html.escape(sig["slot"]), html.escape(sig["name"]),
+    ) % (html.escape(sig["slot"]), html.escape(sig["name"]),
          html.escape(sig["host"]), sig["blurb"])
+    if not href:
+        return '<article class="card reveal reveal-d%d">%s</article>' % (idx % 4, inner)
+    return (
+        '<article class="card show-card reveal reveal-d%d">'
+        '<a class="show-card-link" href="%s">%s'
+        '<span class="show-card-go">Show page %s</span></a>'
+        '</article>'
+    ) % (idx % 4, href, inner, IC["arrow"])
 
 def event_card(ev, idx=0):
     return (
@@ -720,11 +910,12 @@ def np_card():
         '<div class="np-card">'
         '<div class="np-head"><span class="pill pill-live"><span class="dot-live"></span> On Air Now</span>' + EQ7 + '</div>'
         '<div class="np-body">'
-        '<div class="vinyl-wrap"><div class="vinyl" style="--s:96px"></div><div class="sheen"></div></div>'
+        + art_slot(96) +
         '<div class="np-info">'
         '<div class="np-show" id="np-show">Nonstop Legends</div>'
         '<div class="np-host" id="np-host">The Great American Songbook</div>'
         '<div class="np-time" id="np-time"></div>'
+        + track_line() +
         '</div></div>'
         '<div class="np-foot"><span class="np-next" id="np-next">Streaming live from the Palm Beaches</span>'
         '<button class="btn btn-primary btn-sm" data-play data-play-label-text="Listen"><span class="ic-play" style="display:inline-flex">'
@@ -792,7 +983,7 @@ def home_page():
         '<h2>Signature shows, real hosts</h2>'
         '<p class="lede mx-auto">Live and local, morning to midnight — company for every hour of your day.</p></div>'
         '<div class="grid grid-3">'
-        + show_card(SIGNATURE[0], 0) + show_card(SIGNATURE[1], 1) + show_card(SIGNATURE[3], 2) +
+        + show_card(PROGRAM_BY_SLUG["the-morning-lounge"], 0) + show_card(PROGRAM_BY_SLUG["middays-with-mike-mcgann"], 1) + show_card(PROGRAM_BY_SLUG["american-standards-by-the-sea"], 2) +
         '</div><div class="center mt-4"><a class="btn btn-ghost" href="shows.html">See the full weekly schedule ' + IC["arrow"] + '</a></div>'
         '</div></section>'
     )
@@ -884,7 +1075,7 @@ def listen_page():
         '<div class="form-status" role="status"></div></form></div>'
         '</div></div></section>'
     )
-    body = hero + big + marquee() + ways + request
+    body = hero + big + recently_played(12) + marquee() + ways + request
     return document("listen.html",
                     "Listen Live | Legends Radio 100.3 FM · Palm Beaches",
                     "Listen to Legends Radio 100.3 FM live online, on the iOS & Android app, on your radio at "
@@ -903,7 +1094,7 @@ def shows_page():
         '<section class="section"><div class="container">'
         '<div class="section-head center"><span class="eyebrow centered">Signature Programs</span>'
         '<h2>Shows worth setting your day around</h2></div>'
-        '<div class="grid grid-3">' + "".join(show_card(s, i) for i, s in enumerate(SIGNATURE)) + '</div>'
+        '<div class="grid grid-3">' + "".join(show_card(s, i) for i, s in enumerate(PROGRAMS)) + '</div>'
         '</div></section>'
     )
     # weekly grid
@@ -942,7 +1133,7 @@ def shows_page():
     item_list = {"@type": "ItemList", "name": "Legends Radio Shows",
                  "itemListElement": [{"@type": "ListItem", "position": i + 1,
                                       "item": {"@type": "RadioSeries", "name": s["name"]}}
-                                     for i, s in enumerate(SIGNATURE)]}
+                                     for i, s in enumerate(PROGRAMS)]}
     body = hero + sig + grid + cta_band("Hear it live",
                                         "Whatever’s on right now, it’s the best music ever made — playing on 100.3 FM.",
                                         secondary=("hosts.html", "Meet the Hosts"))
@@ -1058,36 +1249,136 @@ def about_page():
                     "the Great American Songbook — live & local from the Palm Beaches, streaming worldwide.",
                     body, "about.html")
 
+def ev_month(iso):
+    d = datetime.datetime.strptime(iso[:19], "%Y-%m-%d %H:%M:%S")
+    return d.strftime("%B %Y")
+
+
+def ev_render(e, idx=0):
+    """One dated event. build.py renders the snapshot with this; legends.js
+    renders live results with the same markup, so a refresh is seamless."""
+    d = datetime.datetime.strptime(e["start"][:19], "%Y-%m-%d %H:%M:%S")
+    time_txt = "All day" if e.get("all_day") else d.strftime("%-I:%M %p").lower().replace("am", "AM").replace("pm", "PM")
+    cost = e.get("cost") or "Free"
+    return (
+        '<li class="ev reveal reveal-d%d" data-ev-start="%s">'
+        '<time class="ev-date" datetime="%s">'
+        '<span class="ev-mon">%s</span><span class="ev-day">%s</span><span class="ev-dow">%s</span>'
+        '</time>'
+        '<div class="ev-body">'
+        '<h3 class="ev-title"><a href="%s" target="_blank" rel="noopener">%s</a></h3>'
+        '<p class="ev-meta">%s<span class="ev-dot">·</span>%s</p>'
+        '<p class="ev-where">%s</p>'
+        '</div>'
+        '<span class="ev-cost">%s</span>'
+        '</li>'
+    ) % (idx % 4, html.escape(e["start"], quote=True), d.strftime("%Y-%m-%dT%H:%M:%S"),
+         d.strftime("%b"), d.strftime("%-d"), d.strftime("%a"),
+         html.escape(e["url"], quote=True), html.escape(e["title"]),
+         html.escape(time_txt), html.escape(e.get("venue") or "Venue TBA"),
+         html.escape(e.get("address") or ""), html.escape(cost))
+
+
 def events_page():
+    data = load_events()
+    evs = data.get("events", [])
+
     hero = page_hero("Events", "The music, out on the town.",
-                     "All season long, Legends 100.3 brings the Great American Songbook off the dial and into the "
-                     "Palm Beaches — supper clubs, live broadcasts, and community nights.", "events.html")
-    grid = (
-        '<section class="section"><div class="container"><div class="grid grid-3">'
-        + "".join(event_card(e, i) for i, e in enumerate(EVENTS)) + '</div>'
-        '<div class="center mt-4"><a class="btn btn-primary btn-lg" href="' + STATION["eventbrite"] + '" target="_blank" rel="noopener">'
-        + IC["ticket"] + ' See upcoming dates &amp; get tickets</a>'
-        '<p class="form-note mt-2">Free concerts at the <strong>Downtown Abacoa Amphitheater</strong>, Jupiter · '
-        'Dates are announced on Eventbrite and on the air. Follow us on '
-        '<a href="' + STATION["instagram"] + '" target="_blank" rel="noopener" style="color:var(--gold)">Instagram</a> so you never miss one.</p></div>'
+                     "All season long, Legends 100.3 brings the Great American Songbook off the dial "
+                     "and into the Palm Beaches — free concerts, supper clubs and live broadcasts.",
+                     "events.html")
+
+    # --- the live board ----------------------------------------------------
+    rows, seen_month = "", None
+    for i, e in enumerate(evs):
+        m = ev_month(e["start"])
+        if m != seen_month:
+            seen_month = m
+            rows += '<li class="ev-month"><span>%s</span></li>' % html.escape(m)
+        rows += ev_render(e, i)
+    if not rows:
+        rows = ('<li class="ev-empty" data-ev-empty>No dates on the calendar right now — '
+                'new concerts are announced on the air first.</li>')
+
+    board = (
+        '<section class="section" id="calendar"><div class="container">'
+        '<div class="ev-head">'
+        '<div><span class="eyebrow">What&rsquo;s On</span>'
+        '<h2 style="margin:.6rem 0 .4rem">The Legends calendar</h2></div>'
+        '<p class="ev-status" data-ev-status data-ev-endpoint="%s">'
+        '<span class="ev-dotlive" aria-hidden="true"></span>'
+        '<span data-ev-status-text>Showing the schedule as of %s</span></p>'
+        '</div>'
+        '<div class="ev-countdown" data-ev-countdown hidden>'
+        '<span class="cd-lbl">Next up</span>'
+        '<strong class="cd-name" data-cd-name></strong>'
+        '<span class="cd-clock" data-cd-clock aria-live="polite"></span>'
+        '</div>'
+        '<ol class="ev-list" data-ev-list>%s</ol>'
+        '<p class="form-note center mt-3">Dates come straight from the station&rsquo;s own calendar and '
+        'refresh while this page is open. Tickets and reserved seating on '
+        '<a href="%s" target="_blank" rel="noopener" style="color:var(--gold)">Eventbrite</a>.</p>'
+        '</div></section>'
+    ) % (html.escape(EVENTS_API, quote=True),
+         html.escape(data.get("fetched") or "the last build"), rows,
+         STATION["eventbrite"])
+
+    # --- what the station does, beyond the dated listings -------------------
+    strands = (
+        '<section class="section surface"><div class="container">'
+        '<div class="section-head center"><span class="eyebrow centered">Season Long</span>'
+        '<h2>How Legends shows up</h2></div>'
+        '<div class="grid grid-4">' + "".join(event_card(e, i) for i, e in enumerate(EVENTS)) + '</div>'
         '</div></section>'
     )
+
+    # --- the wider Palm Beach season ---------------------------------------
+    venue_rows = "".join(
+        '<li class="venue reveal reveal-d%d"><a href="%s" target="_blank" rel="noopener">'
+        '<span class="venue-name">%s</span><span class="venue-city">%s</span>'
+        '<span class="venue-go" aria-hidden="true">%s</span></a></li>'
+        % (i % 4, html.escape(u, quote=True), html.escape(n), html.escape(c), IC["external"])
+        for i, (n, u, c) in enumerate(VENUES))
+    around = (
+        '<section class="section"><div class="container">'
+        '<div class="section-head center"><span class="eyebrow centered">Around the Palm Beaches</span>'
+        '<h2>The rest of the season</h2>'
+        '<p class="lede mx-auto" style="margin-inline:auto">The houses Legends keeps company with. '
+        'Each keeps its own calendar — these go straight to theirs.</p></div>'
+        '<ul class="venues">' + venue_rows + '</ul>'
+        '</div></section>'
+    )
+
     host_event = (
         '<section class="section surface"><div class="container"><div class="split">'
         '<div class="reveal">' + eyebrow("Host With Legends") +
         '<h2 style="margin:.7rem 0 1rem">Bringing Legends to your event</h2>'
-        '<p class="lede">Planning a gala, grand opening, or charity night? A live Legends broadcast or a Songbook '
-        'performance sets a tone nothing else can — timeless, elegant, unmistakably Palm Beach.</p>'
+        '<p class="lede">Planning a gala, grand opening or charity night? A live Legends broadcast or a '
+        'Songbook performance sets a tone nothing else can — timeless, elegant, unmistakably Palm Beach.</p>'
         '<div class="mt-3"><a class="btn btn-ghost btn-lg" href="contact.html">Talk to us ' + IC["arrow"] + '</a></div></div>'
         '<div class="reveal reveal-d1"><div class="deco-frame" style="aspect-ratio:1/1">' + emblem_big() + '</div></div>'
         '</div></div></section>'
     )
-    body = hero + grid + host_event + newsletter_block()
+
+    ld = [{"@type": "Event", "name": e["title"], "startDate": e["start"].replace(" ", "T"),
+           "endDate": (e.get("end") or e["start"]).replace(" ", "T"),
+           "eventStatus": "https://schema.org/EventScheduled",
+           "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+           "url": e["url"],
+           "location": {"@type": "Place", "name": e.get("venue") or "",
+                        "address": e.get("address") or ""},
+           "organizer": {"@type": "Organization", "name": STATION["parent"]}}
+          for e in evs]
+
+    body = hero + board + strands + around + host_event + newsletter_block()
     return document("events.html",
                     "Events | Legends Radio 100.3 FM · Palm Beaches",
-                    "Legends Radio 100.3 FM events across Palm Beach County — supper clubs, live broadcasts, and "
-                    "community nights celebrating the Great American Songbook. Dates & tickets on Eventbrite.",
-                    body, "events.html")
+                    "Upcoming Legends Radio 100.3 FM events across Palm Beach County — free tribute "
+                    "concerts at Abacoa, supper clubs and live broadcasts. Updated from the station's "
+                    "own calendar.",
+                    body, "events.html",
+                    extra_schema=(ld if len(ld) != 1 else ld[0]) if ld else None)
+
 
 def podcast_page():
     hero = page_hero("On-Demand", "Miss a show? Not anymore.",
@@ -1183,6 +1474,274 @@ def patron_ribbon():
         '<a href="advertise.html">See the patrons&rsquo; board ' + IC["arrow"] + '</a></p></div>'
         '</section>'
     )
+
+
+# ---------------------------------------------------------------------------
+# NOW PLAYING — album art
+#
+# Art comes from SecureNetSystems, the station's own streaming vendor, on the
+# same CDN that feeds the station's official player. Roughly 40% of tracks
+# carry no cover, so the spinning vinyl is the designed fallback rather than a
+# broken image.
+# ---------------------------------------------------------------------------
+def clamp_desc(text, n=155):
+    """Search engines cut descriptions around 155 chars — trim on a word
+    boundary so nothing ends mid-word."""
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", text)).strip()
+    if len(text) <= n:
+        return text
+    cut = text[:n].rsplit(" ", 1)[0].rstrip(" ,;:—-")
+    return cut + "\u2026"
+
+
+def art_slot(size, cls=""):
+    return (
+        '<div class="art %s" data-art>'
+        '<img class="art-img" data-art-img alt="" width="%d" height="%d" hidden>'
+        '<div class="vinyl-wrap art-fallback" data-art-fallback>'
+        '<div class="vinyl" style="--s:%dpx"></div><div class="sheen"></div></div>'
+        '</div>'
+    ) % (cls, size, size, size)
+
+
+def track_line():
+    """Live track strip — hidden until the feed actually returns a song, so it
+    never renders an empty row during ad breaks or talk."""
+    return (
+        '<div class="track" data-track hidden>'
+        '<span class="track-note" aria-hidden="true">' + IC["note"] + '</span>'
+        '<span class="track-txt"><b data-track-title></b><span data-track-artist></span></span>'
+        '</div>'
+    )
+
+
+def recently_played(limit=12):
+    """Station-wide play history, rendered client-side from the vendor feed."""
+    return (
+        '<section class="section surface" id="recently-played">'
+        '<div class="container">'
+        '<div class="section-head center"><span class="eyebrow centered">Just Played</span>'
+        '<h2>The last hour on 100.3</h2>'
+        '<p class="lede mx-auto" style="margin-inline:auto">Straight off the transmitter — '
+        'what the Palm Beaches have been listening to, updated as it airs.</p></div>'
+        '<ol class="played" data-played data-played-limit="%d" aria-live="polite" aria-label="Recently played songs">'
+        '<li class="played-empty" data-played-empty>Loading the playlist&hellip;</li>'
+        '</ol>'
+        '<noscript><p class="form-note center mt-2">The live playlist needs JavaScript. '
+        'You can always hear what&rsquo;s on at <strong>100.3 FM</strong>.</p></noscript>'
+        '</div></section>'
+    ) % limit
+
+
+# ---------------------------------------------------------------------------
+# AUDIO — the episode archive
+# ---------------------------------------------------------------------------
+def episode_list(prog):
+    eps = prog.get("audio") or []
+    if not eps:
+        return (
+            '<div class="empty reveal">'
+            '<div class="empty-ic" aria-hidden="true">' + IC["headphones"] + '</div>'
+            '<h3>The archive is open.</h3>'
+            '<p>Episodes of <em>%s</em> will appear here as the station posts them. '
+            'In the meantime it airs %s &mdash; and the stream never stops.</p>'
+            '<div class="empty-actions">'
+            '<button class="btn btn-primary btn-sm" data-play data-play-label-text="Listen Live">'
+            '<span class="eq eq-mini" aria-hidden="true"><i></i><i></i><i></i></span>'
+            '<span data-play-label>Listen Live</span></button>'
+            '<a class="btn btn-ghost btn-sm" href="%s" target="_blank" rel="noopener">'
+            'The station archive %s</a></div>'
+            '</div>'
+        ) % (html.escape(prog["name"]), html.escape(prog["slot"]).lower(),
+             STATION["soundcloud"], IC["external"])
+
+    rows = ""
+    for i, ep in enumerate(eps):
+        if ep["kind"] == "mp3":
+            rows += (
+                '<li class="episode reveal reveal-d%d" data-episode data-src="%s">'
+                '<button class="ep-play" data-ep-play aria-label="Play %s">'
+                '<span class="ic-play">%s</span><span class="ic-pause">%s</span></button>'
+                '<div class="ep-main">'
+                '<h3 class="ep-title">%s</h3>'
+                '<div class="ep-scrub"><div class="ep-rail" data-ep-rail role="presentation">'
+                '<div class="ep-fill" data-ep-fill></div></div>'
+                '<span class="ep-time"><span data-ep-now>0:00</span> / <span data-ep-dur>&mdash;&mdash;</span></span>'
+                '</div></div>'
+                '<a class="ep-dl" href="%s" download aria-label="Download %s">%s</a>'
+                '</li>'
+            ) % (i % 4, html.escape(ep["url"], quote=True),
+                 html.escape(ep["title"], quote=True), IC["play"], IC["pause"],
+                 html.escape(ep["title"]), html.escape(ep["url"], quote=True),
+                 html.escape(ep["title"], quote=True), IC["arrow"])
+        else:  # soundcloud — click-to-load facade, no third-party JS until asked
+            rows += (
+                '<li class="episode episode-sc reveal reveal-d%d">'
+                '<button class="ep-play" data-sc-load '
+                'data-sc-url="https://w.soundcloud.com/player/?url=%s&amp;color=%%23E7C572&amp;'
+                'hide_related=true&amp;show_comments=false&amp;show_user=true&amp;visual=false" '
+                'aria-label="Load and play %s from SoundCloud">'
+                '<span class="ic-play">%s</span></button>'
+                '<div class="ep-main"><h3 class="ep-title">%s</h3>'
+                '<p class="ep-note">%s<span class="ep-src">SoundCloud</span></p></div>'
+                '<a class="ep-dl" href="%s" target="_blank" rel="noopener" '
+                'aria-label="Open %s on SoundCloud">%s</a>'
+                '</li>'
+            ) % (i % 4, html.escape(ep["url"], quote=True), html.escape(ep["title"], quote=True),
+                 IC["play"], html.escape(ep["title"]),
+                 html.escape(ep.get("note", "")), html.escape(ep["url"], quote=True),
+                 html.escape(ep["title"], quote=True), IC["external"])
+    return '<ol class="episodes">' + rows + '</ol>'
+
+
+# ---------------------------------------------------------------------------
+# VIDEO — click-to-load facades. No YouTube iframe (and no YouTube cookie)
+# until the visitor actually asks for the clip.
+# ---------------------------------------------------------------------------
+def video_card(v, idx=0):
+    return (
+        '<article class="vid reveal reveal-d%d">'
+        '<button class="vid-thumb" data-video="%s" aria-label="Play %s">'
+        '<img src="https://i.ytimg.com/vi/%s/hqdefault.jpg" alt="" width="480" height="360" loading="lazy">'
+        '<span class="vid-play" aria-hidden="true">%s</span>'
+        '</button>'
+        '<div class="vid-meta"><h3>%s</h3><p>%s</p>'
+        '<span class="vid-chan">%s</span></div>'
+        '</article>'
+    ) % (idx % 4, v["id"], html.escape(v["title"], quote=True), v["id"], IC["play"],
+         html.escape(v["title"]), v.get("sub", ""), html.escape(v["channel"]))
+
+
+def video_page():
+    hero = page_hero("Video", "Legends, on screen.",
+                     "Sessions, behind-the-scenes and the occasional lyric video — the Songbook "
+                     "with the picture turned on.", "video.html")
+    body = hero
+    for group in ("In the studio", "From our sponsors"):
+        items = [v for v in VIDEOS if v["group"] == group]
+        if not items:
+            continue
+        note = ""
+        if group == "From our sponsors":
+            note = ('<p class="lede mx-auto" style="margin-inline:auto">Programming paid for by its '
+                    'sponsor, published on the sponsor&rsquo;s own channel.</p>')
+        body += (
+            '<section class="section"><div class="container">'
+            '<div class="section-head center"><span class="eyebrow centered">%s</span>'
+            '<h2>%s</h2>%s</div>'
+            '<div class="vid-grid">%s</div>'
+            '</div></section>'
+        ) % (html.escape(group), html.escape(group), note,
+             "".join(video_card(v, i) for i, v in enumerate(items)))
+
+    body += (
+        '<section class="section-tight"><div class="container">'
+        '<p class="form-note center">Clips load from YouTube only once you press play, '
+        'so nothing is requested from Google until you ask for it.</p>'
+        '</div></section>'
+    )
+    body += cta_band("Rather just listen?",
+                     "The stream runs 24 hours a day from the Palm Beaches.",
+                     secondary=("shows.html", "See the Schedule"))
+    return document("video.html", "Video | Legends Radio 100.3 FM",
+                    "Sessions, behind-the-scenes footage and music video from Legends Radio 100.3 FM, "
+                    "the Great American Songbook station in Florida's Palm Beaches.",
+                    body, "video.html")
+
+
+# ---------------------------------------------------------------------------
+# ONE PAGE PER SHOW
+# ---------------------------------------------------------------------------
+def program_page(prog):
+    host_obj = next((h for h in HOSTS if h["slug"] == prog.get("host_slug")), None)
+
+    crumbs = ('<nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a>'
+              '<span>/</span><a href="shows.html">Shows</a>'
+              '<span>/</span><span style="color:var(--muted)">%s</span></nav>') % html.escape(prog["name"])
+
+    hero = (
+        '<section class="page-hero show-hero" data-show="%s">' % html.escape(prog["name"], quote=True)
+        + deco_bar() + '<div class="container">'
+        '<span class="eyebrow centered">%s</span>'
+        '<h1>%s</h1>'
+        '<div class="rule-deco" aria-hidden="true"><i></i></div>'
+        '<p class="show-slot">%s<span class="show-dot">·</span>%s</p>'
+        '<p>%s</p>'
+        '<div class="show-live" data-show-live hidden>'
+        '<span class="pill pill-live"><span class="dot-live"></span> On air right now</span>'
+        '<button class="btn btn-primary btn-sm" data-play data-play-label-text="Listen Live">'
+        '<span class="eq eq-mini" aria-hidden="true"><i></i><i></i><i></i></span>'
+        '<span data-play-label>Listen Live</span></button></div>'
+        + crumbs + '</div></section>'
+    ) % (html.escape(prog["kind"]), html.escape(prog["name"]),
+         html.escape(prog["days"]), html.escape(prog["time"]), prog["blurb"])
+
+    # --- host ------------------------------------------------------------
+    host_block = ""
+    if host_obj:
+        photo = ('<img src="%s" alt="%s" width="360" height="360" loading="lazy" decoding="async">'
+                 % (host_obj["photo"], html.escape(host_obj["name"], quote=True))) if host_obj.get("photo") else \
+                ('<span class="mono">%s</span>' % html.escape(host_obj["mono"]))
+        host_block = (
+            '<section class="section surface"><div class="container"><div class="split">'
+            '<div class="reveal show-portrait">%s</div>'
+            '<div class="reveal reveal-d1">%s'
+            '<h2 style="margin:.7rem 0 1rem">%s</h2>'
+            '<p class="lede">%s</p>'
+            '<div class="mt-3"><a class="btn btn-ghost btn-sm" href="hosts.html">'
+            'All on-air personalities %s</a></div>'
+            '</div></div></div></section>'
+        ) % (photo, eyebrow("Your Host"), html.escape(host_obj["name"]),
+             host_obj["bio"], IC["arrow"])
+
+    # --- audio -------------------------------------------------------------
+    audio = (
+        '<section class="section" id="listen"><div class="container">'
+        '<div class="section-head"><span class="eyebrow">On Demand</span>'
+        '<h2>Listen to %s</h2></div>%s'
+        '</div></section>'
+    ) % (html.escape(prog["name"]), episode_list(prog))
+
+    # --- video (only when the show actually has clips) ----------------------
+    vids = [v for v in VIDEOS if v["id"] in (prog.get("video") or [])]
+    video = ""
+    if vids:
+        video = (
+            '<section class="section surface"><div class="container">'
+            '<div class="section-head"><span class="eyebrow">Watch</span><h2>On screen</h2></div>'
+            '<div class="vid-grid">%s</div></div></section>'
+        ) % "".join(video_card(v, i) for i, v in enumerate(vids))
+
+    # --- more shows --------------------------------------------------------
+    siblings = [p for p in PROGRAMS if p["slug"] != prog["slug"] and p["kind"] == prog["kind"]][:3]
+    if len(siblings) < 3:
+        siblings += [p for p in PROGRAMS if p["slug"] != prog["slug"] and p not in siblings][:3 - len(siblings)]
+    more = (
+        '<section class="section"><div class="container">'
+        '<div class="section-head center"><span class="eyebrow centered">Keep Listening</span>'
+        '<h2>More on 100.3</h2></div>'
+        '<div class="grid grid-3">%s</div>'
+        '<div class="center mt-4"><a class="btn btn-ghost" href="shows.html">'
+        'The full weekly schedule %s</a></div>'
+        '</div></section>'
+    ) % ("".join(show_card(p, i) for i, p in enumerate(siblings)), IC["arrow"])
+
+    schema = {"@type": "RadioSeries", "name": prog["name"],
+              "description": re.sub(r"<[^>]+>", "", prog["blurb"]),
+              "url": BASE + "/" + program_file(prog["slug"]),
+              "productionCompany": {"@type": "Organization", "name": STATION["parent"]},
+              "publication": {"@type": "BroadcastEvent", "isLiveBroadcast": True,
+                              "publishedOn": {"@type": "RadioChannel", "name": STATION["name"]}}}
+    if host_obj:
+        schema["actor"] = [{"@type": "Person", "name": n} for n in host_obj.get("persons", [host_obj["name"]])]
+
+    body = hero + audio + host_block + video + more
+    lead = "%s on Legends Radio 100.3 FM, %s. " % (prog["name"], prog["slot"])
+    return document(program_file(prog["slug"]),
+                    "%s with %s | Legends Radio 100.3 FM" % (prog["name"], prog["host"])
+                    if prog.get("host_slug") else "%s | Legends Radio 100.3 FM" % prog["name"],
+                    clamp_desc(lead + re.sub(r"<[^>]+>", "", prog["blurb"])),
+                    body, "shows.html", extra_schema=schema)
 
 
 def advertise_page():
@@ -1369,8 +1928,9 @@ def fmt12(hhmm):
 # ===========================================================================
 # SEO FILES
 # ===========================================================================
-PAGES = ["index.html", "listen.html", "shows.html", "hosts.html", "podcast.html", "events.html",
-         "about.html", "advertise.html", "contact.html"]
+PAGES = (["index.html", "listen.html", "shows.html", "hosts.html", "podcast.html",
+          "video.html", "events.html", "about.html", "advertise.html", "contact.html"]
+         + [program_file(p["slug"]) for p in PROGRAMS])
 
 def build_sitemap():
     urls = ""
@@ -1412,8 +1972,10 @@ def main():
         "index.html": home_page(), "listen.html": listen_page(), "shows.html": shows_page(),
         "hosts.html": hosts_page(), "podcast.html": podcast_page(), "events.html": events_page(),
         "about.html": about_page(), "advertise.html": advertise_page(), "contact.html": contact_page(),
-        "404.html": not_found_page(),
+        "video.html": video_page(), "404.html": not_found_page(),
     }
+    for prog in PROGRAMS:
+        pages[program_file(prog["slug"])] = program_page(prog)
     total = 0
     for path, content in pages.items():
         total += write(path, content)
