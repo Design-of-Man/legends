@@ -1275,3 +1275,75 @@ section{position:relative;}
 .form-note a,.patrons-note a,.ev-where a{text-decoration:underline;text-underline-offset:.22em;
   text-decoration-thickness:1px;text-decoration-color:rgba(231,197,114,.5);}
 .form-note a:hover,.patrons-note a:hover{text-decoration-color:currentColor;}
+
+/* ============================================================================
+   Wayfinding into the show pages
+   ========================================================================== */
+/* schedule row → show page */
+.sched-row .s-show.s-link{
+  display:inline-flex;align-items:center;gap:.5rem;
+  transition:color .35s var(--ease);
+}
+.sched-row .s-show.s-link:hover{color:var(--gold);}
+.s-go{display:inline-flex;opacity:0;transform:translateX(-4px);color:var(--gold-deep);
+  transition:opacity .35s var(--ease),transform .35s var(--ease);}
+.s-go svg{width:.85rem;}
+.sched-row:hover .s-go,.s-link:focus-visible .s-go{opacity:1;transform:none;}
+
+/* host card → show page */
+.host-show-link{display:inline-flex;align-items:center;gap:.45rem;transition:color .35s var(--ease);}
+.host-show-link:hover{color:var(--gold-bright);}
+.hs-go{display:inline-flex;opacity:0;transform:translateX(-4px);
+  transition:opacity .35s var(--ease),transform .35s var(--ease);}
+.hs-go svg{width:.8rem;}
+.host-card:hover .hs-go,.host-show-link:focus-visible .hs-go{opacity:1;transform:none;}
+
+/* ---------- Sponsored weekend programming -------------------------------- */
+.sponsors{display:flex;flex-direction:column;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+.sponsor-row{
+  display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;padding:1.1rem 1.3rem;
+  background:linear-gradient(165deg,var(--ink-3),var(--ink-2));transition:background .4s var(--ease);
+}
+.sponsor-row:hover{background:var(--ink-4);}
+.sp-when{flex:none;min-width:12ch;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gold-deep);}
+.sp-name{flex:1;min-width:min(100%,16ch);font-family:var(--serif);font-size:1.08rem;color:var(--champagne);}
+.sp-by{display:inline-flex;align-items:center;gap:.5rem;flex:none;font-size:.84rem;color:var(--gold);
+  border-bottom:1px solid transparent;padding-bottom:.15rem;transition:border-color .35s var(--ease);}
+.sp-by:hover{border-bottom-color:var(--gold);}
+.sp-by svg{width:.85rem;}
+
+/* ---------- On-demand index ---------------------------------------------- */
+.od-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1.4rem;
+  flex-wrap:wrap;margin-bottom:1.6rem;}
+.od-head h2{font-size:clamp(1.6rem,3vw,2.3rem);}
+.od-head h2 a{transition:color .35s var(--ease);}
+.od-head h2 a:hover{color:var(--gold);}
+.od-sub{color:var(--muted);font-size:.92rem;}
+
+.pending{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+.pending-row a{display:flex;align-items:center;gap:.9rem;padding:1.05rem 1.25rem;height:100%;
+  background:linear-gradient(165deg,var(--ink-3),var(--ink-2));transition:background .4s var(--ease);}
+.pending-row a:hover{background:var(--ink-4);}
+.pd-name{flex:1;font-family:var(--serif);font-size:1rem;color:var(--champagne);line-height:1.3;}
+.pd-slot{flex:none;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);}
+.pd-go{flex:none;color:var(--gold-deep);display:inline-flex;transition:transform .35s var(--ease);}
+.pd-go svg{width:.85rem;}
+.pending-row a:hover .pd-go{transform:translateX(3px);color:var(--gold);}
+
+@media (max-width:620px){
+  .sponsor-row{gap:.5rem 1rem;}
+  .sp-when{min-width:100%;}
+  .od-head{flex-direction:column;align-items:flex-start;}
+}
+
+/* the live track sits under the on-air badge on a show page */
+.show-live{flex-direction:column;gap:.9rem;}
+.show-live .track{margin-top:0;padding-top:.9rem;border-top:1px solid var(--line-2);
+  justify-content:center;max-width:min(100%,46ch);}
+@media (min-width:700px){
+  .show-live{flex-direction:row;}
+  .show-live .track{border-top:0;border-left:1px solid var(--line-2);padding:0 0 0 1rem;margin-left:.2rem;}
+}

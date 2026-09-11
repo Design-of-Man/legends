@@ -325,3 +325,47 @@ listings.
 - **The archive is thin** because only four MP3s and a handful of SoundCloud
   posts exist publicly. Point `PROGRAMS[*]["audio"]` at a real feed and the
   empty states fill themselves in.
+
+## 2026-09 — follow-up pass: wayfinding, on-demand, schedule integrity
+
+Cleaning up what the restructure exposed.
+
+### A real schedule bug
+Sunday had **two shows claiming 07:30–10:00** — *Sunday Legends Brunch*
+(07:00–10:00) and the descriptive *Sunday Morning Standards* placeholder
+(07:30–10:00). The on-air engine picked between them arbitrarily, so the
+"On Air Now" card could show the wrong programme every Sunday morning. The
+placeholder is gone; the Brunch owns the slot.
+
+There is now a check that every day covers 00:00–24:00 with no overlaps and no
+gaps. All seven days pass.
+
+### Wayfinding into the show pages
+14 show pages existed but little linked to them. Now:
+- **40 schedule rows** link through to the show's page (a matcher maps the
+  schedule's fuller titles — "Dick Robinson's American Standards by the Sea" —
+  onto `PROGRAMS`; the descriptive music blocks deliberately match nothing).
+- **8 of 9 host cards** link to their show (Lauren May has no distinct show).
+- Show cards on `shows.html` are links, grouped Weekdays / Weekends / Archive
+  rather than one flat wall of 14.
+- `shows.html` now also lists the station's **sponsored weekend half-hours**,
+  each linking to the business behind it.
+
+### On-Demand rebuilt around real audio
+`podcast.html` was four hand-written cards describing categories. It now builds
+itself from `PROGRAMS`: every episode that actually exists, playable inline,
+grouped by show — **7 episodes across 3 shows** — plus an honest "still
+live-only" list of the other 11. The `ON_DEMAND` placeholder list is deleted.
+
+### Breadcrumbs
+The visible breadcrumb was rendering the **headline** rather than the section,
+so On-Demand read "Home / Miss a show? Not anymore." Both the visible crumb and
+the JSON-LD now derive from one source — the nav label — so they cannot drift.
+Show pages nest under Shows in both. A breadcrumb on 404 made no sense and is
+gone. **0 mismatches across all 25 pages.**
+
+### Verified
+- axe 0 violations · 0 JS errors · 0 horizontal overflow — 25 pages × desktop + mobile
+- Schedule: no overlaps, no gaps, all 7 days
+- Breadcrumbs: visible and structured data identical on every page
+- Links, assets, alt, `<h1>`, titles, JSON-LD, sitemap: clean

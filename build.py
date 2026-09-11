@@ -463,7 +463,6 @@ SCHEDULE = {
     0: [  # Sunday
         {"start": "00:00", "end": "07:00", **_OVERNIGHT},
         {"start": "07:00", "end": "10:00", "show": "Sunday Legends Brunch", "host": "Bob Merrill", "tag": "Live", "slug": "bob-merrill"},
-        {"start": "07:30", "end": "10:00", "show": "Sunday Morning Standards", "host": "An easy start to Sunday", "tag": "Music"},
         {"start": "10:00", "end": "12:00", "show": "American Standards by the Sea", "host": "Dick Robinson", "tag": "Signature", "slug": "dick-robinson"},
         {"start": "12:00", "end": "18:00", "show": "Sunday Serenade", "host": "Afternoon standards", "tag": "Music"},
         {"start": "18:00", "end": "20:00", "show": "Legends Evenings", "host": "Standards for the evening", "tag": "Music"},
@@ -482,6 +481,13 @@ NAV = [("index.html", "Home"), ("listen.html", "Listen"), ("shows.html", "Shows"
 # ---------------------------------------------------------------------------
 # ASSET CACHE-BUSTING
 # ---------------------------------------------------------------------------
+NAV_LABEL = dict(NAV)
+
+
+def crumb_label(filename, fallback=""):
+    return NAV_LABEL.get(filename) or fallback
+
+
 def asset_v(relpath):
     p = os.path.join(ROOT, relpath)
     try:
@@ -671,14 +677,17 @@ def org_schema():
         "sameAs": [s["instagram"], s["soundcloud"], s["tunein"], s["app_ios"], s["app_android"]],
     }
 
-def breadcrumb(title, filename):
-    return {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            {"@type": "ListItem", "position": 1, "name": "Home", "item": BASE + "/"},
-            {"@type": "ListItem", "position": 2, "name": title, "item": BASE + "/" + filename},
-        ],
-    }
+def breadcrumb(title, filename, trail=None):
+    """`trail` is an optional list of (name, filename) sitting between Home and
+    this page — the show pages nest under Shows, and the structured data has to
+    match the visible breadcrumb or Google ignores it."""
+    items = [{"@type": "ListItem", "position": 1, "name": "Home", "item": BASE + "/"}]
+    for name, fn in (trail or []):
+        items.append({"@type": "ListItem", "position": len(items) + 1,
+                      "name": name, "item": BASE + "/" + fn})
+    items.append({"@type": "ListItem", "position": len(items) + 1,
+                  "name": title, "item": BASE + "/" + filename})
+    return {"@type": "BreadcrumbList", "itemListElement": items}
 
 def jsonld(*nodes):
     graph = [org_schema()]
@@ -695,7 +704,7 @@ def jsonld(*nodes):
 CSS_V = None
 JS_V = None
 
-def document(filename, title, desc, body, active, extra_schema=None, og_image="legends-og.png"):
+def document(filename, title, desc, body, active, extra_schema=None, og_image="legends-og.png", crumb_trail=None, crumb_name=None):
     # One place to guarantee every page ships a snippet-length description.
     desc = clamp_desc(desc)
     canonical = BASE + "/" + ("" if filename == "index.html" else filename)
@@ -709,7 +718,8 @@ def document(filename, title, desc, body, active, extra_schema=None, og_image="l
         "window.LEGENDS_NOWPLAYING=" + json.dumps(NOW_PLAYING_URL) + ";"
         "window.LEGENDS_HISTORY=" + json.dumps(PLAY_HISTORY_URL) + ";"
     )
-    schema = jsonld(breadcrumb(title.split(" | ")[0], filename) if filename != "index.html" else None,
+    schema = jsonld(breadcrumb(crumb_name or crumb_label(filename, title.split(" | ")[0]), filename, crumb_trail)
+                    if filename not in ("index.html", "404.html") else None,
                     extra_schema)
     return (
         "<!doctype html><html lang=\"en\"><head>"
@@ -811,8 +821,10 @@ def newsletter_block():
     )
 
 def page_hero(eb, h1, sub, filename):
+    # The crumb names the section ("On-Demand"), not the headline — a headline
+    # like "Miss a show? Not anymore." tells a visitor nothing about where they are.
     crumbs = ('<nav class="breadcrumb" aria-label="Breadcrumb"><a href="index.html">Home</a>'
-              '<span>/</span><span style="color:var(--muted)">%s</span></nav>') % html.escape(h1)
+              '<span>/</span><span style="color:var(--muted)">%s</span></nav>') % html.escape(crumb_label(filename, eb))
     return ('<section class="page-hero">' + deco_bar() + '<div class="container">'
             + eyebrow(eb, True) + '<h1>' + h1 + '</h1>'
             '<div class="rule-deco" aria-hidden="true"><i></i></div>'
@@ -839,38 +851,27 @@ EVENTS = [
      "blurb": "The Society for the Preservation of the Great American Songbook's signature gala — honoring legends like Marilyn Maye, from Club Colette to the Kravis Center."},
 ]
 
-ON_DEMAND = [
-    {"title": "American Standards by the Sea", "host": "Dick Robinson", "icon": "wave",
-     "blurb": "Dick Robinson's syndicated Songbook program, produced in part aboard the yacht <em>Airwaves</em>. "
-              "Catch it weeknights at 11 PM — or stream on demand.",
-     "cta": "Listen on SoundCloud", "url": STATION["soundcloud"]},
-    {"title": "The Legends Radio Archive", "host": "On SoundCloud", "icon": "headphones",
-     "blurb": "Interviews, features, and moments from the studio — the station's growing on-demand library, "
-              "free to stream anytime.",
-     "cta": "Browse the archive", "url": STATION["soundcloud"]},
-    {"title": "The Sounds of Sinatra", "host": "Legends 100.3", "icon": "mic",
-     "blurb": "The Chairman of the Board, hour after hour — the Sinatra songbook as only Legends plays it.",
-     "cta": "Visit the show", "url": "show-the-sounds-of-sinatra.html"},
-    {"title": "Cindy on Legends", "host": "Cindy Hite", "icon": "heart",
-     "blurb": "Cindy Hite's programme on Legends 100.3, available to stream between broadcasts.",
-     "cta": "Follow on SoundCloud", "url": STATION["soundcloud"]},
-]
 
 def host_card(h, idx=0, full=False):
     persons = ""
     img = ('<img src="%s" alt="%s, %s on Legends Radio 100.3 FM" loading="lazy" decoding="async">'
            % (h["photo"], html.escape(h["name"]), html.escape(h["role"]))) if h.get("photo") else ""
     bio = ('<p class="host-bio">%s</p>' % h["bio"]) if full else ""
+    # Their show now has a page — make the show line the way through to it.
+    pslug = program_slug_for(h.get("show"))
+    show_line = ('<a class="host-show host-show-link" href="%s">%s<span class="hs-go" aria-hidden="true">%s</span></a>'
+                 % (program_file(pslug), html.escape(h["show"]), IC["arrow"])) if pslug else \
+                ('<div class="host-show">%s</div>' % html.escape(h["show"]))
     return (
         '<article class="card host-card reveal reveal-d%d">'
         '<div class="host-medallion">%s<span class="mono">%s</span></div>'
         '<span class="host-role">%s</span>'
         '<h3>%s</h3>'
-        '<div class="host-show">%s</div>'
+        '%s'
         '<div class="host-slot">%s</div>%s'
         '</article>'
     ) % (idx % 4, img, h["mono"], html.escape(h["role"]), html.escape(h["name"]),
-         html.escape(h["show"]), html.escape(h["slot"]), bio)
+         show_line, html.escape(h["slot"]), bio)
 
 def show_card(sig, idx=0):
     """Card for one programme. Links through to that show's own page when it
@@ -1086,17 +1087,88 @@ def listen_page():
                                   "broadcastFrequency": {"@type": "BroadcastFrequencySpecification",
                                                          "broadcastFrequencyValue": "100.3", "broadcastSignalModulation": "FM"}})
 
+def _norm(t):
+    return re.sub(r"[^a-z0-9 ]", "", re.sub(r"\s+", " ", (t or "").lower())).strip()
+
+
+def program_slug_for(show_name):
+    """Map a schedule slot (or a host's show) onto its programme page.
+
+    Schedule rows carry fuller titles than PROGRAMS does ("Dick Robinson's
+    American Standards by the Sea" vs "American Standards by the Sea"), and the
+    descriptive music blocks ("Nonstop Legends", "Saturday Morning Swing")
+    deliberately match nothing — they have no page to link to.
+    """
+    n = _norm(show_name)
+    if not n:
+        return None
+    best = None
+    for prog in PROGRAMS:
+        pn = _norm(prog["name"])
+        if pn == n:
+            return prog["slug"]
+        if pn in n or n in pn:
+            if best is None or len(pn) > len(_norm(PROGRAM_BY_SLUG[best]["name"])):
+                best = prog["slug"]
+    return best
+
+
+# Sponsored weekend programming, straight from the station's own nav. The
+# content belongs to each sponsor, so these link out rather than getting pages.
+SPONSORED = next(rows for heading, _sf, rows in PATRONS if heading == "Sponsored Programs")
+
+
+def programs_by_kind():
+    out = []
+    for kind, heading, standfirst in (
+        ("Weekdays", "Every weekday",
+         "Live hosts from the first cup of coffee to the small hours."),
+        ("Weekends", "Weekends &amp; specialty",
+         "The Songbook stretches out — jazz, brunch, Sinatra and the community hour."),
+        ("Archive", "From the archive",
+         "Shows kept online in full, long after they aired."),
+    ):
+        rows = [p for p in PROGRAMS if p["kind"] == kind]
+        if not rows:
+            continue
+        out.append(
+            '<section class="section%s"><div class="container">'
+            '<div class="section-head center"><span class="eyebrow centered">%s</span>'
+            '<h2>%s</h2><p class="lede mx-auto" style="margin-inline:auto">%s</p></div>'
+            '<div class="grid grid-3">%s</div>'
+            '</div></section>'
+            % (" surface" if kind == "Weekends" else "", html.escape(kind), heading, standfirst,
+               "".join(show_card(p, i) for i, p in enumerate(rows)))
+        )
+    return "".join(out)
+
+
+def sponsored_block():
+    rows = "".join(
+        '<li class="sponsor-row reveal reveal-d%d">'
+        '<span class="sp-when">%s</span>'
+        '<span class="sp-name">%s</span>'
+        '<a class="sp-by" href="%s" target="_blank" rel="noopener">%s %s</a>'
+        '</li>'
+        % (i % 4, html.escape(kicker), line, html.escape(url, quote=True),
+           html.escape(name), IC["external"])
+        for i, (name, url, kicker, line) in enumerate(SPONSORED))
+    return (
+        '<section class="section"><div class="container">'
+        '<div class="section-head center"><span class="eyebrow centered">Sponsored Programming</span>'
+        '<h2>Weekend half-hours</h2>'
+        '<p class="lede mx-auto" style="margin-inline:auto">Presented by their sponsors. '
+        'Each links to the business behind it.</p></div>'
+        '<ul class="sponsors">' + rows + '</ul>'
+        '</div></section>'
+    )
+
+
 def shows_page():
     hero = page_hero("Shows & Schedule", "The week on Legends 100.3.",
                      "Live hosts by day, standards by night, and specialty programs all weekend — here’s "
                      "everything on the air, with the current show highlighted in real time.", "shows.html")
-    sig = (
-        '<section class="section"><div class="container">'
-        '<div class="section-head center"><span class="eyebrow centered">Signature Programs</span>'
-        '<h2>Shows worth setting your day around</h2></div>'
-        '<div class="grid grid-3">' + "".join(show_card(s, i) for i, s in enumerate(PROGRAMS)) + '</div>'
-        '</div></section>'
-    )
+    sig = programs_by_kind()
     # weekly grid
     tabs = '<div class="sched-tabs" role="tablist" aria-label="Choose a day">'
     for val, label in DAYS:
@@ -1109,15 +1181,19 @@ def shows_page():
         for i, slot in enumerate(day):
             live_tag = ('<span class="live-badge"><span class="dot-live"></span> Live Now</span>'
                         '<span class="s-tag">%s</span>') % html.escape(slot.get("tag", "Music"))
+            pslug = program_slug_for(slot["show"])
+            show_cell = ('<a class="s-show s-link" href="%s">%s<span class="s-go" aria-hidden="true">%s</span></a>'
+                         % (program_file(pslug), html.escape(slot["show"]), IC["arrow"])) if pslug else \
+                        ('<div class="s-show">%s</div>' % html.escape(slot["show"]))
             rows += (
                 '<div class="sched-row" data-day="%s" data-idx="%d" data-start="%s" data-end="%s">'
                 '<div class="s-time">%s – %s</div>'
-                '<div><div class="s-show">%s</div><div class="s-host">%s</div></div>'
+                '<div>%s<div class="s-host">%s</div></div>'
                 '<div class="s-meta-right" style="text-align:right">%s</div>'
                 '<span class="s-progress"></span>'
                 '</div>'
             ) % (val, i, slot["start"], slot["end"], fmt12(slot["start"]), fmt12(slot["end"]),
-                 html.escape(slot["show"]), html.escape(slot["host"]), live_tag)
+                 show_cell, html.escape(slot["host"]), live_tag)
         panels += '<div data-sched-day="%s" class="sched-list" hidden>%s</div>' % (val, rows)
     grid = (
         '<section class="section surface"><div class="container">'
@@ -1132,9 +1208,11 @@ def shows_page():
     # ItemList schema for signature shows
     item_list = {"@type": "ItemList", "name": "Legends Radio Shows",
                  "itemListElement": [{"@type": "ListItem", "position": i + 1,
-                                      "item": {"@type": "RadioSeries", "name": s["name"]}}
+                                      "url": BASE + "/" + program_file(s["slug"]),
+                                      "item": {"@type": "RadioSeries", "name": s["name"],
+                                               "url": BASE + "/" + program_file(s["slug"])}}
                                      for i, s in enumerate(PROGRAMS)]}
-    body = hero + sig + grid + cta_band("Hear it live",
+    body = hero + sig + grid + sponsored_block() + cta_band("Hear it live",
                                         "Whatever’s on right now, it’s the best music ever made — playing on 100.3 FM.",
                                         secondary=("hosts.html", "Meet the Hosts"))
     return document("shows.html",
@@ -1381,34 +1459,67 @@ def events_page():
 
 
 def podcast_page():
+    """The on-demand index: everything that actually exists to listen to, in one
+    place, playable inline — plus an honest account of what doesn't yet."""
+    with_audio = [p for p in PROGRAMS if p.get("audio")]
+    without = [p for p in PROGRAMS if not p.get("audio")]
+    total = sum(len(p["audio"]) for p in with_audio)
+
     hero = page_hero("On-Demand", "Miss a show? Not anymore.",
-                     "Legends on your schedule — American Standards by the Sea, studio interviews, and specialty "
-                     "shows, streaming free between broadcasts.", "podcast.html")
-    cards = ""
-    for i, p in enumerate(ON_DEMAND):
-        cards += (
-            '<article class="card reveal reveal-d%d" style="display:flex;flex-direction:column">'
-            '<div class="ic" style="width:54px;height:54px;display:grid;place-items:center;border-radius:14px;'
-            'border:1px solid var(--line);background:rgba(231,197,114,.06);color:var(--gold);margin-bottom:1.1rem">%s</div>'
-            '<h3 style="font-size:1.25rem;margin-bottom:.25rem">%s</h3>'
-            '<p style="color:var(--gold);font-weight:600;font-size:.9rem;margin-bottom:.7rem">%s</p>'
-            '<p style="color:var(--muted);font-size:.95rem;flex:1">%s</p>'
-            '<div class="mt-3"><a class="link-arrow" href="%s" target="_blank" rel="noopener">%s %s</a></div>'
-            '</article>'
-        ) % (i % 4, IC[p["icon"]], p["title"], p["host"], p["blurb"], p["url"], p["cta"], IC["external"])
-    grid = ('<section class="section"><div class="container"><div class="grid grid-2">' + cards + '</div>'
-            '<p class="form-note center mt-4">More on the way — the on-demand library grows every week. Follow '
-            '<a href="' + STATION["soundcloud"] + '" target="_blank" rel="noopener" style="color:var(--gold)">SoundCloud</a> '
-            'and <a href="' + STATION["instagram"] + '" target="_blank" rel="noopener" style="color:var(--gold)">Instagram</a> for the latest.</p>'
-            '</div></section>')
-    body = hero + grid + cta_band("Prefer it live?",
-                                  "The Great American Songbook is playing right now on 100.3 FM.",
-                                  secondary=("shows.html", "See the Schedule"))
+                     "Everything Legends has posted to listen back to, gathered in one place — "
+                     "playable right here, no app required.", "podcast.html")
+
+    stat = (
+        '<section class="section-tight"><div class="container-wide"><div class="stats">'
+        '<div class="stat"><div class="num">%d</div><div class="lbl">Episodes On Demand</div></div>'
+        '<div class="stat"><div class="num">%d</div><div class="lbl">Shows In The Archive</div></div>'
+        '<div class="stat"><div class="num">24/7</div><div class="lbl">Live Stream</div></div>'
+        '<div class="stat"><div class="num">100.3</div><div class="lbl">On Your Radio</div></div>'
+        '</div></div></section>'
+    ) % (total, len(with_audio))
+
+    blocks = ""
+    for prog in with_audio:
+        blocks += (
+            '<section class="section"><div class="container">'
+            '<div class="od-head">'
+            '<div><span class="eyebrow">%s</span>'
+            '<h2 style="margin:.5rem 0 .2rem"><a href="%s">%s</a></h2>'
+            '<p class="od-sub">%s</p></div>'
+            '<a class="btn btn-ghost btn-sm" href="%s">Show page %s</a>'
+            '</div>%s</div></section>'
+        ) % (html.escape(prog["slot"]), program_file(prog["slug"]), html.escape(prog["name"]),
+             html.escape(prog["host"]), program_file(prog["slug"]), IC["arrow"],
+             episode_list(prog))
+
+    # Shows with nothing posted yet — said plainly rather than padded out.
+    pending = "".join(
+        '<li class="pending-row"><a href="%s"><span class="pd-name">%s</span>'
+        '<span class="pd-slot">%s</span><span class="pd-go" aria-hidden="true">%s</span></a></li>'
+        % (program_file(p["slug"]), html.escape(p["name"]), html.escape(p["slot"]), IC["arrow"])
+        for p in without)
+    rest = (
+        '<section class="section surface"><div class="container">'
+        '<div class="section-head center"><span class="eyebrow centered">Not Yet Posted</span>'
+        '<h2>Still live-only</h2>'
+        '<p class="lede mx-auto" style="margin-inline:auto">These shows air on 100.3 but have nothing in '
+        'the archive yet. Each page will fill in as the station posts.</p></div>'
+        '<ul class="pending">' + pending + '</ul>'
+        '<p class="form-note center mt-4">The station also keeps an archive on '
+        '<a href="' + STATION["soundcloud"] + '" target="_blank" rel="noopener" style="color:var(--gold)">SoundCloud</a>.</p>'
+        '</div></section>'
+    )
+
+    body = hero + stat + blocks + rest + cta_band(
+        "Prefer it live?",
+        "The Great American Songbook is playing right now on 100.3 FM.",
+        secondary=("shows.html", "See the Schedule"))
     return document("podcast.html",
-                    "On-Demand & Podcasts | Legends Radio 100.3 FM",
-                    "Stream Legends Radio on demand — American Standards by the Sea, the Legends Radio archive, "
-                    "The Sounds of Sinatra, and Cindy on Legends. Free between broadcasts.",
+                    "On-Demand | Legends Radio 100.3 FM",
+                    "Listen back to Legends Radio 100.3 FM — full shows and studio interviews, "
+                    "streaming free between broadcasts.",
                     body, "podcast.html")
+
 
 def patron_plate(name, url, kicker, line, idx):
     """One engraved type plate. Deliberately typographic — we do not reproduce
@@ -1671,7 +1782,9 @@ def program_page(prog):
         '<span class="pill pill-live"><span class="dot-live"></span> On air right now</span>'
         '<button class="btn btn-primary btn-sm" data-play data-play-label-text="Listen Live">'
         '<span class="eq eq-mini" aria-hidden="true"><i></i><i></i><i></i></span>'
-        '<span data-play-label>Listen Live</span></button></div>'
+        '<span data-play-label>Listen Live</span></button>'
+        # nested inside the live block, so it only shows while this show is on air
+        + track_line() + '</div>'
         + crumbs + '</div></section>'
     ) % (html.escape(prog["kind"]), html.escape(prog["name"]),
          html.escape(prog["days"]), html.escape(prog["time"]), prog["blurb"])
@@ -1741,7 +1854,8 @@ def program_page(prog):
                     "%s with %s | Legends Radio 100.3 FM" % (prog["name"], prog["host"])
                     if prog.get("host_slug") else "%s | Legends Radio 100.3 FM" % prog["name"],
                     clamp_desc(lead + re.sub(r"<[^>]+>", "", prog["blurb"])),
-                    body, "shows.html", extra_schema=schema)
+                    body, "shows.html", extra_schema=schema,
+                    crumb_trail=[("Shows", "shows.html")], crumb_name=prog["name"])
 
 
 def advertise_page():
