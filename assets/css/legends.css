@@ -759,3 +759,263 @@ section{position:relative;}
   .host-card:hover .host-medallion::before{animation:none !important;}
   .scroll-rail{display:none !important;}
 }
+
+/* ============================================================================
+   PATRONS — advertisers & partners
+   The one place the site steps out of the midnight supper club and into
+   Palm Beach daylight: a scalloped awning over a shell-white trellis, with
+   every advertiser engraved as a brass plate on the patrons' board.
+   Advertiser artwork is never reproduced — the type IS the mark.
+   ========================================================================== */
+.patrons{
+  /* Daylight palette — scoped to this section only, so the rest of the site
+     keeps its lacquer. Palm green + conch coral + brass on shell white. */
+  --shell:#F6F0E3;
+  --shell-2:#FCF8F0;
+  --palm:#1C453A;
+  --conch:#B8472F;
+  --ink-warm:#231A14;
+  --warm-muted:#665849;
+  --brass-lit:#8C6A20;
+  --hair:rgba(35,26,20,.13);
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  color:var(--ink-warm);
+  background:radial-gradient(130% 90% at 50% -10%,var(--shell-2),var(--shell) 58%);
+  border-block:1px solid rgba(140,106,32,.4);
+  padding:clamp(5.5rem,10vw,9rem) 0 clamp(4rem,7vw,6.5rem);
+  margin-block:clamp(3rem,6vw,5rem);
+}
+.patrons .container{position:relative;z-index:1;}
+
+/* ---------- The awning ---------------------------------------------------- */
+.awning{
+  position:absolute;inset:0 0 auto;height:60px;z-index:2;pointer-events:none;
+  filter:drop-shadow(0 8px 12px rgba(28,69,58,.22));
+}
+.awning i{
+  /* Valance: one convex scallop per stripe — the pitch of the scallop mask and
+     the pitch of the stripes are both 46px, so they stay in phase. */
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,var(--palm) 0 46px,#FBF6EA 46px 92px);
+  -webkit-mask:
+    radial-gradient(circle 23px at 50% 0,#000 98%,#0000 100%) 0 100%/46px 23px repeat-x,
+    linear-gradient(#000 0 0) 0 0/100% 38px no-repeat;
+  mask:
+    radial-gradient(circle 23px at 50% 0,#000 98%,#0000 100%) 0 100%/46px 23px repeat-x,
+    linear-gradient(#000 0 0) 0 0/100% 38px no-repeat;
+}
+
+/* ---------- The trellis --------------------------------------------------- */
+.trellis{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    repeating-linear-gradient(45deg,rgba(28,69,58,.10) 0 1px,transparent 1px 28px),
+    repeating-linear-gradient(-45deg,rgba(28,69,58,.10) 0 1px,transparent 1px 28px);
+  -webkit-mask-image:radial-gradient(95% 72% at 50% 38%,#000,transparent 76%);
+          mask-image:radial-gradient(95% 72% at 50% 38%,#000,transparent 76%);
+}
+
+/* ---------- Masthead ------------------------------------------------------ */
+.patrons .eyebrow{color:var(--conch);}
+.patrons .eyebrow.centered::before{background:linear-gradient(90deg,transparent,var(--conch),transparent);}
+.patrons-head{text-align:center;margin-bottom:clamp(2rem,4vw,3rem);}
+.patrons-title{
+  font-family:var(--serif);font-weight:600;text-transform:uppercase;
+  font-size:clamp(1.1rem,2.2vw,1.5rem);letter-spacing:.34em;
+  color:var(--warm-muted);line-height:1;margin:1.2rem 0 0;
+}
+.patrons-title em{
+  display:block;font-family:var(--script);font-style:normal;font-weight:400;
+  font-size:clamp(4.4rem,16vw,11.5rem);line-height:.82;letter-spacing:0;
+  text-transform:none;color:var(--palm);margin:.06em 0 .02em;
+}
+.patrons-title span{
+  display:block;font-family:var(--sans);font-weight:600;
+  font-size:clamp(.72rem,1.4vw,.86rem);letter-spacing:.42em;
+  color:var(--brass-lit);text-indent:.42em;
+}
+.patrons-lede{
+  max-width:58ch;margin:1.6rem auto 0;color:var(--warm-muted);
+  font-size:clamp(1rem,1.2vw,1.1rem);line-height:1.65;text-wrap:pretty;
+}
+.patrons-lede strong{color:var(--palm);font-weight:600;}
+
+/* ---------- A group on the board ------------------------------------------ */
+.patron-group{margin-top:clamp(3rem,6vw,5rem);}
+.patron-group-head{
+  display:flex;align-items:baseline;gap:.4rem 1.4rem;flex-wrap:wrap;
+  padding-bottom:.9rem;border-bottom:1px solid var(--hair);
+}
+.patron-group-head h3{
+  font-family:var(--serif);font-weight:600;letter-spacing:-.01em;
+  font-size:clamp(1.45rem,2.6vw,2.05rem);color:var(--palm);line-height:1.1;
+}
+.patron-group-head p{
+  color:var(--warm-muted);font-size:.92rem;line-height:1.55;max-width:48ch;flex:1 1 22ch;
+}
+.patron-count{
+  margin-left:auto;font-family:var(--serif);font-size:.9rem;
+  letter-spacing:.14em;color:var(--brass-lit);flex:none;
+}
+
+/* ---------- The plates ---------------------------------------------------- */
+.patron-board{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));
+  gap:1px;background:var(--hair);
+  border:1px solid var(--hair);border-top:0;
+}
+.patron-plate{position:relative;}
+.patron-plate a{
+  position:relative;overflow:hidden;isolation:isolate;
+  display:flex;flex-direction:column;gap:.5rem;height:100%;
+  padding:1.7rem 1.5rem 1.55rem;
+  background:linear-gradient(168deg,var(--shell-2),var(--shell) 88%);
+  transition:transform .55s var(--ease),box-shadow .55s var(--ease),background .55s var(--ease);
+}
+.patron-plate a::after{           /* brass catching the light */
+  content:"";position:absolute;inset:-1px;z-index:2;pointer-events:none;
+  background:linear-gradient(102deg,transparent 34%,rgba(140,106,32,.16) 47%,
+             rgba(255,255,255,.62) 52%,rgba(140,106,32,.10) 58%,transparent 72%);
+  transform:translate3d(-120%,0,0);
+  transition:transform 1.05s var(--ease);
+}
+.patron-plate a:hover,.patron-plate a:focus-visible{
+  transform:translateY(-4px);
+  background:linear-gradient(168deg,#FFFDF8,var(--shell-2) 88%);
+  box-shadow:0 18px 34px -18px rgba(28,69,58,.38);
+}
+.patron-plate a:hover::after,.patron-plate a:focus-visible::after{transform:translate3d(120%,0,0);}
+.patron-plate:hover,.patron-plate:focus-within{z-index:3;}
+
+.plate-kicker{
+  font-size:.66rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--conch);transition:color .45s var(--ease);
+}
+.plate-name{
+  font-family:var(--serif);font-weight:600;font-size:1.16rem;line-height:1.28;
+  letter-spacing:-.005em;color:var(--ink-warm);text-wrap:balance;
+}
+.plate-rule{
+  width:26px;height:1px;flex:none;
+  background:linear-gradient(90deg,var(--brass-lit),rgba(140,106,32,0));
+  margin-top:auto;transition:width .55s var(--ease);
+}
+.plate-line{
+  font-size:.83rem;line-height:1.5;color:var(--warm-muted);
+  overflow-wrap:anywhere;
+}
+.plate-mark{
+  position:absolute;top:1.25rem;right:1.3rem;z-index:3;color:var(--brass-lit);
+  opacity:0;transform:translate3d(-5px,5px,0);
+  transition:opacity .45s var(--ease),transform .45s var(--ease);
+}
+.plate-mark svg{width:.82rem;}
+.patron-plate a:hover .plate-mark,.patron-plate a:focus-visible .plate-mark{opacity:1;transform:none;}
+.patron-plate a:hover .plate-rule,.patron-plate a:focus-visible .plate-rule{width:46px;}
+.patron-plate a:hover .plate-kicker,.patron-plate a:focus-visible .plate-kicker{color:var(--palm);}
+
+/* Gold focus rings are invisible on shell white — go palm green in daylight. */
+.patrons a:focus-visible{outline:2.5px solid var(--palm);outline-offset:-4px;border-radius:0;}
+
+.patrons-note{
+  margin-top:clamp(2.6rem,5vw,4rem);padding-top:1.3rem;border-top:1px solid var(--hair);
+  text-align:center;font-size:.78rem;line-height:1.6;color:var(--warm-muted);
+  max-width:64ch;margin-inline:auto;
+}
+
+@media (max-width:620px){
+  .patron-group-head{flex-direction:column;align-items:flex-start;}
+  /* flex-basis is a *height* once the header stacks — reset it or the
+     standfirst reserves ~22ch of vertical space and opens a void. */
+  .patron-group-head p{flex:none;}
+  .patron-count{margin-left:0;order:-1;}
+  .patron-board{border-top:1px solid var(--hair);}
+}
+@media (prefers-reduced-motion:reduce){
+  .patron-plate a,.patron-plate a::after,.plate-rule,.plate-mark,.plate-kicker{transition:none;}
+  .patron-plate a::after{display:none;}
+}
+
+/* ---------- Homepage ribbon ----------------------------------------------- */
+.ribbon-head{text-align:center;margin-bottom:1.5rem;}
+.ribbon-head p{color:var(--muted);font-size:.95rem;margin-top:.7rem;}
+.ribbon{
+  overflow:hidden;padding:1.05rem 0;border-block:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(231,197,114,.04),transparent);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+}
+.ribbon-track{
+  display:flex;align-items:center;width:max-content;
+  animation:ribbon-roll 72s linear infinite;will-change:transform;
+}
+.ribbon-track span{
+  font-family:var(--serif);font-size:1rem;letter-spacing:.03em;white-space:nowrap;
+  color:var(--champagne);opacity:.8;padding:0 1.35rem;
+}
+.ribbon-track i{width:4px;height:4px;border-radius:50%;background:var(--gold-deep);flex:none;}
+@keyframes ribbon-roll{to{transform:translate3d(-50%,0,0);}}
+.ribbon:hover .ribbon-track{animation-play-state:paused;}
+.ribbon-cta{text-align:center;margin-top:1.4rem;}
+.ribbon-cta a{
+  display:inline-flex;align-items:center;gap:.55rem;padding-bottom:.25rem;
+  font-size:.82rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+  border-bottom:1px solid transparent;transition:border-color .4s var(--ease);
+}
+.ribbon-cta a:hover{border-bottom-color:var(--gold);}
+.ribbon-cta svg{width:1rem;transition:transform .4s var(--ease);}
+.ribbon-cta a:hover svg{transform:translateX(4px);}
+@media (prefers-reduced-motion:reduce){.ribbon-track{animation:none;}}
+
+/* ---------- Audience figures (advertise page) ----------------------------- */
+.figures{
+  display:grid;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+}
+.fig{
+  display:flex;align-items:baseline;gap:1.1rem;padding:1.45rem 1.5rem;
+  background:linear-gradient(165deg,var(--ink-3),var(--ink-2));
+}
+.fig-num{
+  font-family:var(--serif);font-weight:700;line-height:1;color:var(--gold);
+  /* wide enough for "85%" so all four labels share one left edge */
+  font-size:clamp(1.85rem,3.4vw,2.5rem);min-width:3.5ch;
+}
+.fig-lbl{color:var(--muted);font-size:.94rem;line-height:1.5;}
+.figures-note{margin-top:.9rem;font-size:.76rem;letter-spacing:.04em;color:var(--muted-2);}
+
+/* ---------- Testimonial --------------------------------------------------- */
+.testimonial{
+  position:relative;max-width:46rem;margin-inline:auto;text-align:center;
+  padding:clamp(1.6rem,3vw,2.4rem) 0;
+}
+.testimonial::before{
+  content:"\201C";position:absolute;top:-.14em;left:50%;transform:translateX(-50%);
+  font-family:var(--serif);font-size:clamp(6rem,14vw,10rem);line-height:1;
+  color:var(--gold);opacity:.12;pointer-events:none;
+}
+.testimonial blockquote p{
+  position:relative;font-family:var(--serif);font-style:italic;
+  font-size:clamp(1.22rem,2.3vw,1.7rem);line-height:1.48;
+  color:var(--champagne);text-wrap:balance;
+}
+.testimonial figcaption{display:flex;flex-direction:column;gap:.35rem;margin-top:1.6rem;}
+.t-name{font-size:.86rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);}
+.t-role{font-size:.84rem;color:var(--muted);}
+
+/* ---------- Sales contact card -------------------------------------------- */
+.sales-card{
+  display:flex;flex-direction:column;padding:1.5rem 1.6rem;
+  border:1px solid var(--line);border-radius:var(--radius);
+  background:linear-gradient(165deg,var(--ink-3),var(--ink-2));
+}
+.sales-eb{font-size:.68rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-deep);}
+.sales-name{font-family:var(--serif);font-size:1.4rem;color:var(--champagne);margin:.35rem 0 .9rem;}
+.sales-card ul{color:var(--muted);font-size:.94rem;}
+.sales-card li{display:flex;align-items:center;gap:.65rem;}
+.sales-card li+li{margin-top:.55rem;}
+.sales-card svg{width:1rem;color:var(--gold-deep);}
+.sales-card a{color:var(--gold);border-bottom:1px solid transparent;transition:border-color .35s var(--ease);}
+.sales-card a:hover{border-bottom-color:var(--gold);}

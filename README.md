@@ -143,3 +143,78 @@ was deliberately excluded** (Alaina's Cafe, Harbourside/BurgerFi, Uncle
 Eddie's, Bake Me A Wish etc.) — that artwork belongs to the advertisers, not
 the station. Confirm the station holds rights to each host portrait before
 launch.
+
+## 2026-09 — advertisers & partners ("the patrons' board")
+
+The site had an Advertise page with no advertisers on it. This adds the real
+roster, crawled from the station's own live site, and gives it a home that is
+worth looking at.
+
+### Where the roster came from
+
+`legendsradio.com` returns 403 to most automated clients but serves a normal
+browser UA fine, so the whole site was crawled directly (43 pages off
+`wp-sitemap.xml`). Four sources, all of them the station's own:
+
+| Source | What it yielded |
+|---|---|
+| Sitewide **"Friends of Legends 100.3"** footer | Schumacher Auto Group, The Lois Pope LIFE Foundation, Preserve Our Gas, CSB Media Arts Center, Palm Beach Code School |
+| **Banner rotator** (`?wpbrmethod=ad&hit=1&id=…`) | The Cosmetic Dentist (sitewide), and on the arts pages: The Society of the Four Arts, Sunrise Theatre, The Pops Orchestra of the Palm Beaches |
+| **Sponsored programming** in the primary nav | Mittleman Eye, First Rehabilitation, The Culture Circuit, The GOLD LAW Firm, Hippocrates Wellness — each weekend show links straight to its sponsor |
+| **Homepage sliders / named testimonial** | Addington Place of Jupiter, Culinary Studio, CBS12, Palm Beach Symphony |
+
+**18 current partners.** The rotator also still holds ~25 expired 2019–2020
+creative slots (Kravis, Maltz Jupiter Theatre, Palm Beach Dramaworks, a decade
+of finished contests). Those are deliberately **excluded** — they are not
+current business. The full inventory is recoverable by walking ids 1–40 on the
+rotator endpoint if the owner wants any of them reinstated.
+
+All 18 destinations were checked live: every one resolves. Four were `http://`
+in the station's own markup and were upgraded to `https://`.
+
+### No borrowed artwork
+
+Consistent with the 2026-08 decision, **no advertiser logo is reproduced.**
+Each patron is set as an engraved type plate — kicker, name, hairline brass
+rule, descriptor. That is rights-clean (the creative belongs to the
+advertisers) and, on a Playfair/Pinyon site, better looking than a logo wall.
+Descriptor lines use the station's own words where it publishes them.
+
+### The design — Palm Beach daylight
+
+The site is a midnight supper club. The patrons' board is the one place it
+steps outside: a green-and-white **scalloped awning** over a shell-white
+**lattice**, with palm green, conch coral and brass replacing gold-on-black.
+The contrast is the point — it reads as stepping out from under the awning into
+Worth Avenue at eleven in the morning. Implementation notes:
+
+- Daylight tokens are **scoped to `.patrons`**, so nothing else on the site shifts.
+- Awning and lattice are pure CSS (`mask` + `repeating-linear-gradient`); the
+  scallop pitch and the stripe pitch are both 46px so they stay in phase.
+- Zero new requests, zero images, zero dependencies added.
+- Gold focus rings are invisible on shell white, so focus goes **palm green**
+  inside the daylight section.
+- Plate hover is a brass sheen sweep on `transform`/`opacity` only; disabled
+  under `prefers-reduced-motion`.
+
+Also added: a brass **partner ribbon** on the homepage, the station's real
+audience-profile figures, the Palm Beach Symphony testimonial, and the
+published sales contact (Tim Reever, 561-469-6702, `treever@legendsradio.com`).
+Audience figures are quoted verbatim from the station's own `/advertisers/`
+page and are labelled as the station's figures on the page — they are not
+independently verified.
+
+### Verified this run
+- axe (WCAG 2.0/2.1/2.2 A + AA): **0 violations**, advertise + home, desktop + mobile
+- CLS **0.006** (advertise) / **0.001** (home); no horizontal overflow at 390px
+- All internal links, assets, `alt`, `<h1>` counts, meta and JSON-LD: clean
+- All 18 advertiser destinations resolve
+
+### Owner to-dos
+- **Confirm the roster is current** — especially Culinary Studio and CBS12,
+  which appear as homepage slider/banner placements rather than in the footer.
+- **Reinstate anything from the expired rotator** that is still a live account.
+- **Sponsored-program times** are taken from the station's nav labels; confirm
+  them against the current clock.
+- **Audience figures** — the station publishes these; confirm the source before
+  they go in a media kit.

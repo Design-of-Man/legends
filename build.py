@@ -46,6 +46,11 @@ STATION = {
     "request": "561-685-9565",
     "request_e164": "+15616859565",
     "email": "info@legendsradio.com",
+    "sales_name": "Tim Reever",
+    "sales_title": "Station Manager",
+    "sales_phone": "561-469-6702",
+    "sales_phone_e164": "+15614696702",
+    "sales_email": "treever@legendsradio.com",
     "addr_street": "760 US Highway 1, Suite 102",
     "addr_city": "North Palm Beach",
     "addr_region": "FL",
@@ -73,6 +78,81 @@ ARTISTS = ["Frank Sinatra", "Ella Fitzgerald", "Tony Bennett", "Dean Martin", "N
            "Michael Bublé", "Diana Krall", "Harry Connick Jr.", "Barbra Streisand", "Rod Stewart",
            "Vic Damone", "Jack Jones", "Bobby Darin", "Peggy Lee", "Sammy Davis Jr.",
            "Michael Feinstein", "Sarah Vaughan", "Nancy Wilson"]
+
+# ---------------------------------------------------------------------------
+# PATRONS — advertisers & partners
+#
+# Sourced 2026-09-11 from the station's own live site (legendsradio.com): the
+# sitewide "Friends of Legends 100.3" footer, the live banner rotator
+# (`?wpbrmethod=ad&id=…`), the sponsored-programming entries in the primary
+# nav, and the named testimonial on /advertisers/. Only currently-running
+# partners are listed; the rotator also holds a decade of expired 2019–2020
+# creative, which is deliberately excluded (see README).
+#
+# Names and links only. **No advertiser logo artwork is reproduced** — that
+# creative belongs to the advertisers, not to the station. Each patron is set
+# as an engraved type plate instead, which is both cleaner and rights-safe.
+#
+# (group heading, group standfirst, [(name, url, kicker, line), …])
+# ---------------------------------------------------------------------------
+PATRONS = [
+    ("Friends of Legends",
+     "Presenting partners, carried in the house colours on every page of the station.",
+     [("Schumacher Auto Group", "https://www.schumacherauto.com/", "Automotive",
+       "schumacherauto.com"),
+      ("The Lois Pope LIFE Foundation", "https://www.life-edu.org/", "Philanthropy",
+       "life-edu.org"),
+      ("Preserve Our Gas", "https://preserveourgas.org/your-legends-hour/", "Your Legends Hour",
+       "Society for the Preservation of the Great American Songbook"),
+      ("CSB Media Arts Center", "https://gocsb.com", "Broadcast Training",
+       "Reinventing training in broadcast media"),
+      ("Palm Beach Code School", "https://palmbeachcodeschool.com", "Digital Training",
+       "Web development, social media marketing &amp; digital filmmaking")]),
+
+    ("Legends Loves the Arts",
+     "The stages, scores and seasons the station has kept company with for years.",
+     [("The Society of the Four Arts", "https://www.fourarts.org/", "Palm Beach",
+       "fourarts.org"),
+      ("Palm Beach Symphony", "https://www.palmbeachsymphony.org/", "West Palm Beach",
+       "palmbeachsymphony.org"),
+      ("The Pops Orchestra of the Palm Beaches", "https://www.popsorchestrapalmbeaches.com/", "The Palm Beaches",
+       "popsorchestrapalmbeaches.com"),
+      ("Sunrise Theatre", "https://www.sunrisetheatre.com/", "Fort Pierce",
+       "sunrisetheatre.com")]),
+
+    ("Sponsored Programs",
+     "Weekend hours built around a single brand — the deepest association the station sells.",
+     [("Mittleman Eye", "https://mittlemaneye.com/", "Saturdays · 8:00 AM",
+       "Through the Eyes of Dr. Mittleman"),
+      ("First Rehabilitation", "https://www.firstrehabnpb.com/", "Saturdays · 8:30 AM",
+       "Pain to Power with Dave Kashuba"),
+      ("The Culture Circuit", "https://culturecircuit.art/", "Saturdays · 9:00 AM",
+       "culturecircuit.art"),
+      ("The GOLD LAW Firm", "https://goldlaw.com/", "Sundays · 8:00 AM",
+       "The Gold Standard Radio Show"),
+      ("Hippocrates Wellness", "https://hippocrateswellness.org/", "Sundays · 9:00 AM",
+       "Health, Happiness and Healing")]),
+
+    ("Around the Palm Beaches",
+     "Neighbours on the air, on the banner rotation, and out on remote.",
+     [("The Cosmetic Dentist", "https://www.thecosmeticdentist.com/", "Dentistry",
+       "thecosmeticdentist.com"),
+      ("Addington Place of Jupiter", "https://www.seniorlifestyle.com/property/florida/addington-place-of-jupiter/", "Jupiter",
+       "Live broadcast host — The Morning Lounge"),
+      ("Culinary Studio", "https://culinary-studio.com/culinary-clash/", "Dining",
+       "Culinary Clash"),
+      ("CBS12 News", "https://cbs12.com", "Media Partner",
+       "cbs12.com")]),
+]
+
+# Audience figures exactly as published by the station on legendsradio.com/advertisers/.
+# Quoted, never extrapolated — the footnote on the page says whose numbers these are.
+AUDIENCE_PROFILE = [
+    ("2&times;", "more likely to be affluent consumers born before 1960"),
+    ("3&times;", "more likely to hold $1M+ in investments"),
+    ("4&times;", "more likely to buy or sell property each year"),
+    ("85%", "more likely to complete their mortgage within 12 months"),
+]
 
 # ---------------------------------------------------------------------------
 # HOSTS  (confirmed on-air talent + roles; bios use documented facts only)
@@ -742,7 +822,7 @@ def home_page():
         + listen_options_grid() +
         '</div></section>'
     )
-    body = hero + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
+    body = hero + marquee() + stats + intro + shows + hosts + events + listen + patron_ribbon() + newsletter_block() + cta_band(
         "Pour a drink. Turn it up.",
         "The Great American Songbook is playing right now on 100.3 FM — and streaming worldwide.",
         secondary=("shows.html", "Browse Shows"))
@@ -1039,17 +1119,108 @@ def podcast_page():
                     "The Sounds of Sinatra, and Cindy on Legends. Free between broadcasts.",
                     body, "podcast.html")
 
+def patron_plate(name, url, kicker, line, idx):
+    """One engraved type plate. Deliberately typographic — we do not reproduce
+    advertiser logo artwork (see the PATRONS note)."""
+    return (
+        '<li class="patron-plate reveal reveal-d%d">'
+        '<a href="%s" target="_blank" rel="noopener">'
+        '<span class="plate-kicker">%s</span>'
+        '<span class="plate-name">%s</span>'
+        '<span class="plate-rule" aria-hidden="true"></span>'
+        '<span class="plate-line">%s</span>'
+        '<span class="plate-mark" aria-hidden="true">%s</span>'
+        '</a></li>'
+    ) % (idx % 4, html.escape(url, quote=True), kicker, html.escape(name), line, IC["external"])
+
+
+def patrons_board():
+    """The signature moment: the page steps out of the midnight supper club and
+    into Palm Beach daylight — a scalloped awning over a shell-white trellis,
+    with every advertiser set as a brass plate on the patrons' board."""
+    groups = ""
+    for gi, (heading, standfirst, rows) in enumerate(PATRONS):
+        plates = "".join(patron_plate(n, u, k, l, i) for i, (n, u, k, l) in enumerate(rows))
+        groups += (
+            '<section class="patron-group" aria-labelledby="pg-%d">'
+            '<div class="patron-group-head reveal">'
+            '<h3 id="pg-%d">%s</h3><p>%s</p>'
+            '<span class="patron-count">%02d</span>'
+            '</div>'
+            '<ul class="patron-board">%s</ul>'
+            '</section>'
+        ) % (gi, gi, html.escape(heading), standfirst, len(rows), plates)
+
+    total = sum(len(r) for _, _, r in PATRONS)
+    return (
+        '<section class="patrons" id="patrons">'
+        '<div class="awning" aria-hidden="true"><i></i></div>'
+        '<div class="trellis" aria-hidden="true"></div>'
+        '<div class="container">'
+        '<div class="patrons-head reveal">'
+        '<span class="eyebrow centered">In Legendary Company</span>'
+        '<h2 class="patrons-title">The <em>Patrons</em><span>of 100.3</span></h2>'
+        '<p class="patrons-lede">The houses, stages and storefronts that keep the Songbook on the air '
+        'across the Palm Beaches. <strong>%d</strong> of them, and room on the board for yours.</p>'
+        '</div>%s'
+        '<p class="patrons-note">Listed by name only — advertiser artwork remains the property of each business. '
+        'Current as of the station&rsquo;s September 2026 schedule and banner rotation.</p>'
+        '</div></section>'
+    ) % (total, groups)
+
+
+def patron_ribbon():
+    """Compact homepage nod to the roster — a brass ribbon, not a logo wall."""
+    names = [n for _, _, rows in PATRONS for (n, _u, _k, _l) in rows]
+    spans = "".join('<span>%s</span><i aria-hidden="true"></i>' % html.escape(n) for n in names)
+    return (
+        '<section class="section-tight ribbon-sec"><div class="container">'
+        '<div class="ribbon-head reveal"><span class="eyebrow centered">In Legendary Company</span>'
+        '<p>Proudly supported by the Palm Beaches&rsquo; finest.</p></div></div>'
+        '<div class="ribbon" aria-hidden="true"><div class="ribbon-track">' + spans + spans + '</div></div>'
+        '<div class="sr-only">Legends Radio advertisers and partners: ' + html.escape(", ".join(names)) + '.</div>'
+        '<div class="container"><p class="ribbon-cta reveal">'
+        '<a href="advertise.html">See the patrons&rsquo; board ' + IC["arrow"] + '</a></p></div>'
+        '</section>'
+    )
+
+
 def advertise_page():
-    hero = page_hero("Advertise", "Reach the Palm Beaches.",
-                     "Legends 100.3 delivers a loyal, affluent, engaged audience across the Palm Beaches — on FM, "
-                     "streaming, mobile, and in the community. Let’s put your brand in legendary company.", "advertise.html")
+    s = STATION
+    hero = page_hero("Advertise", "Palm Beach County’s gateway to the top ten percent.",
+                     "Legends 100.3 is the only commercial station in the market curated for Palm Beach&rsquo;s "
+                     "highest earners — delivered by the most trusted voices on the air, to listeners with the "
+                     "means and the appetite to buy.", "advertise.html")
+
+    # --- The pitch, in the station's own published terms -------------------
+    figures = "".join(
+        '<li class="fig reveal reveal-d%d"><span class="fig-num">%s</span><span class="fig-lbl">%s</span></li>'
+        % (i % 4, n, l) for i, (n, l) in enumerate(AUDIENCE_PROFILE))
+    pitch = (
+        '<section class="section surface"><div class="container"><div class="split">'
+        '<div class="reveal">' + eyebrow("The Audience") +
+        '<h2 style="margin:.7rem 0 1rem">The top 10% of households,<br>listening on purpose.</h2>'
+        '<p class="lede">Legends reaches Palm Beach County households with expendable income of '
+        '$250,000 or more — an audience that drives nearly half of all U.S. consumer spending, and '
+        'stays with a station for hours rather than minutes.</p>'
+        '<p class="lede" style="margin-top:1rem">Seventy-five percent of Americans say they trust radio '
+        'hosts more than television personalities. On 100.3 those hosts are Palm Beach figures in their '
+        'own right — entertainers, philanthropists and community leaders whose endorsement carries '
+        'weight a banner never will.</p>'
+        '</div>'
+        '<div class="reveal reveal-d1"><ul class="figures">' + figures + '</ul>'
+        '<p class="figures-note">Audience figures as published by Legends Radio 100.3.</p></div>'
+        '</div></div></section>'
+    )
+
+    # --- Why advertisers choose Legends -----------------------------------
     why = [
-        ("users", "A loyal, affluent audience", "Legends reaches engaged adults 45+ across one of the country’s most affluent markets — listeners who trust the station and stay for hours."),
-        ("radio", "Live, local &amp; multi-platform", "One buy reaches listeners on 100.3 FM, the worldwide stream, the iOS &amp; Android apps, and the station’s social channels."),
-        ("mic", "Host endorsements that land", "Real hosts, real trust. Live reads and endorsements from voices your customers invite into their day carry weight a banner never will."),
-        ("megaphone", "Syndicated reach", "Programs like <em>American Standards by the Sea</em> extend your message to 75+ stations nationwide."),
-        ("ticket", "Events &amp; sponsorships", "Put your brand on stage with supper clubs, live broadcasts, and community nights across Palm Beach County."),
-        ("heart", "Community goodwill", "Align with a station the Palm Beaches genuinely love — and the causes it champions."),
+        ("users", "Target affluence", "The only commercial station in the market curated for Palm Beach&rsquo;s top earners — no waste, no spill into audiences you are not trying to reach."),
+        ("radio", "One buy, four platforms", "100.3 FM, the worldwide stream, the iOS and Android apps, and the station&rsquo;s social channels — bought once, delivered everywhere."),
+        ("mic", "Trusted local voices", "Live reads and host endorsements from the personalities your customers invite into the car, the kitchen and the office every day."),
+        ("megaphone", "Syndicated reach", "<em>American Standards by the Sea</em> carries the station — and its sponsors — to 75+ affiliates nationwide."),
+        ("ticket", "On air, online, in person", "Supper clubs, live remotes and concerts at Abacoa put your brand in front of the audience with a drink in their hand."),
+        ("check", "Turnkey creative", "A local partner who writes it, produces it and plans the flight — built on the holy trinity of reach, frequency and creativity."),
     ]
     cards = "".join(
         '<article class="card reveal reveal-d%d"><div class="ic" style="width:52px;height:52px;display:grid;place-items:center;'
@@ -1060,18 +1231,35 @@ def advertise_page():
             '<div class="section-head center"><span class="eyebrow centered">Why Legends</span>'
             '<h2>Legendary company for your brand</h2></div>'
             '<div class="grid grid-3">' + cards + '</div></div></section>')
+
+    # --- Testimonial (published on legendsradio.com/advertisers/) ----------
+    quote = (
+        '<section class="section-tight"><div class="container"><figure class="testimonial reveal">'
+        '<blockquote><p>On air, online and in person&hellip; on-target results. Legends is very helpful and '
+        'conscientious in relaying the proper messaging to give us an audible voice to many and bring us '
+        'successful results.</p></blockquote>'
+        '<figcaption><span class="t-name">Jennifer Jones</span>'
+        '<span class="t-role">Director of Communication · Palm Beach Symphony</span></figcaption>'
+        '</figure></div></section>'
+    )
+
+    # --- Sales contact + enquiry form -------------------------------------
     form = (
         '<section class="section surface"><div class="container"><div class="split">'
         '<div class="reveal">' + eyebrow("Let’s Talk") +
-        '<h2 style="margin:.7rem 0 1rem">Start the conversation</h2>'
-        '<p class="lede">Tell us a little about your business and goals. Our team will follow up with a custom '
-        'plan — on-air, streaming, digital, and events.</p>'
-        '<ul class="stack-sm mt-3" style="color:var(--muted)">'
-        '<li>' + IC["phone"] + ' <a href="tel:' + STATION["phone_e164"] + '" style="color:var(--gold)">' + STATION["phone"] + '</a> · Sales &amp; Studio</li>'
-        '<li style="margin-top:.6rem">' + IC["mail"] + ' <a href="mailto:' + STATION["email"] + '" style="color:var(--gold)">' + STATION["email"] + '</a></li>'
-        '</ul></div>'
+        '<h2 style="margin:.7rem 0 1rem">There is room on the board.</h2>'
+        '<p class="lede">Tell us a little about your business and what you are hoping to move. We will come '
+        'back with a plan — on air, streaming, digital and events.</p>'
+        '<div class="sales-card mt-3">'
+        '<span class="sales-eb">Station Manager</span>'
+        '<span class="sales-name">' + s["sales_name"] + '</span>'
+        '<ul class="stack-sm">'
+        '<li>' + IC["phone"] + ' <a href="tel:' + s["sales_phone_e164"] + '">' + s["sales_phone"] + '</a></li>'
+        '<li>' + IC["mail"] + ' <a href="mailto:' + s["sales_email"] + '">' + s["sales_email"] + '</a></li>'
+        '<li>' + IC["pin"] + ' ' + s["addr_street"] + ', ' + s["addr_city"] + ', ' + s["addr_region"] + ' ' + s["addr_zip"] + '</li>'
+        '</ul></div></div>'
         '<div class="reveal reveal-d1"><form class="form card" data-endpoint="https://formsubmit.co/ajax/'
-        + STATION["email"] + '" data-success="Thank you — a Legends representative will reach out shortly.">'
+        + s["email"] + '" data-success="Thank you — a Legends representative will reach out shortly.">'
         '<input type="hidden" name="_subject" value="New advertising inquiry — legendsradio.com">'
         '<div class="row"><div class="field"><label for="ad-name">Name</label><input id="ad-name" name="name" required></div>'
         '<div class="field"><label for="ad-co">Company</label><input id="ad-co" name="company" required></div></div>'
@@ -1083,11 +1271,12 @@ def advertise_page():
         '<div class="form-status" role="status"></div></form></div>'
         '</div></div></section>'
     )
-    body = hero + why_stats() + grid + form
+
+    body = hero + why_stats() + pitch + patrons_board() + quote + grid + form
     return document("advertise.html",
                     "Advertise on Legends Radio 100.3 FM | Palm Beach Radio Advertising",
-                    "Advertise on Legends Radio 100.3 FM and reach an affluent, loyal audience across the Palm "
-                    "Beaches — FM, streaming, mobile, syndication, and events. Request a media kit today.",
+                    "Advertise on Legends Radio 100.3 FM and reach the top 10% of Palm Beach County households "
+                    "— FM, streaming, mobile, syndication and events. See the patrons’ board and request a media kit.",
                     body, "advertise.html")
 
 def why_stats():
