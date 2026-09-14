@@ -369,3 +369,72 @@ gone. **0 mismatches across all 25 pages.**
 - Schedule: no overlaps, no gaps, all 7 days
 - Breadcrumbs: visible and structured data identical on every page
 - Links, assets, alt, `<h1>`, titles, JSON-LD, sitemap: clean
+
+## 2026-09 — daylight: the palette flips
+
+The site launched near-black (`--ink #0B0807`, luminance 0.003). That was wrong
+for this client, and the evidence is one-sided.
+
+### What the category actually does
+
+Measured from the live CSS of each site, 2026-09-14:
+
+| Site | Page background | |
+|---|---|---|
+| **legendsradio.com — the station's own site** | `#ffffff` | LIGHT |
+| Classic FM | `#f5f5f5` | LIGHT |
+| Smooth Radio | `#f5f5f5` | LIGHT |
+| Heart | `#f5f5f5` | LIGHT |
+| Jazz FM | `#ffffff` | LIGHT |
+| Global Player | `#ffffff` | LIGHT |
+| NPR | `#ffffff` | LIGHT |
+| iHeartRadio | `light-dark()` | adaptive |
+| SiriusXM | `#021f3c` | dark |
+| TuneIn | `#000000` | dark |
+
+The split is not arbitrary. Every **station brand** runs light. The only dark
+ones are **subscription streaming products** — SiriusXM and TuneIn — where the
+visitor lives inside a player. Legends is a station brand with editorial
+content, and it was built like a player app.
+
+Two further reasons, beyond convention:
+
+- **It fought the brand they already have.** legendsradio.com is white. Anyone
+  who knows the station would read the rebuild as a change of identity.
+- **It was the worst case for this audience.** The station's own published
+  figure is that listeners are "2× more likely to be affluent consumers born
+  before 1960". Light-on-dark haloes badly with the lens changes and
+  astigmatism that come with age.
+
+### How the flip was done
+
+The stylesheet is token-driven, so the palette turns over in the tokens rather
+than across 403 separate declarations. `:root` now carries a warm-paper scale
+(`--ink #F7F2E7`), warm near-black type, and a **brass** (`--gold #8A6A1F`)
+in place of the bright gold, which is unreadable on paper.
+
+The black lacquer survives as a **scoped accent** — `.lacquer` re-declares the
+original midnight tokens, and is applied to the homepage hero, each page's hero
+band, the sticky player and the footer. Everything inside those keeps working
+untouched, because only the tokens change.
+
+Paper is `#F7F2E7`, not `#fff` — pure white is clinical under Playfair.
+
+### Caught in the flip
+- **Form fields are `.field`, not `.form`** — the first override missed them
+  entirely and left dark wells with invisible placeholders on a light page.
+- `.deco-frame` and `.host-medallion` hardcoded near-black and became black
+  boxes floating on paper.
+- The active nav link was set to `color:inherit`, so over the lacquer hero it
+  inherited the body's new dark ink and **disappeared**. The header now carries
+  its own palette in both states: night tokens while it floats over the hero,
+  paper tokens once scrolled.
+- `.pill` landed at 4.4:1 on the tinted card ground — a step deeper to clear AA.
+
+### Verified
+- **axe 0 violations · 0 JS errors · 0 horizontal overflow** — 25 pages ×
+  desktop + mobile
+- Contrast scanned separately across all 25 pages: **0 failures**. Note that
+  scanning before the scroll-reveal transition settles produces false
+  positives, since axe blends the half-faded foreground — force
+  `.reveal{opacity:1}` before measuring.

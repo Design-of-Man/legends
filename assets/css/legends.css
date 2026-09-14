@@ -1347,3 +1347,172 @@ section{position:relative;}
   .show-live{flex-direction:row;}
   .show-live .track{border-top:0;border-left:1px solid var(--line-2);padding:0 0 0 1rem;margin-left:.2rem;}
 }
+
+/* ============================================================================
+   DAYLIGHT — the site's default
+   Every station brand we measured runs light (Classic FM, Smooth, Jazz FM,
+   Heart, Global Player, NPR — and legendsradio.com itself is #ffffff). Dark is
+   the convention for streaming *products* (SiriusXM, TuneIn), not for a
+   station with editorial content. It also matters for this audience: the
+   station's own figures say listeners are 2x more likely to have been born
+   before 1960, and light-on-dark haloes badly for older eyes.
+
+   The stylesheet is token-driven, so the palette flips here rather than in 400
+   separate declarations. The black lacquer survives as a scoped accent —
+   see `.lacquer` below — on the hero, the sticky player and the footer.
+   ========================================================================== */
+:root{
+  /* surfaces: warm paper, not white — #fff is clinical under Playfair */
+  --night:#EFE6D5;
+  --ink:#F7F2E7;          /* page */
+  --ink-2:#FCF8F0;        /* raised */
+  --ink-3:#FFFDF8;        /* cards */
+  --ink-4:#FFFFFF;        /* card hover */
+  --ember:#F6E7DF;        /* warm tinted surface */
+
+  /* type — warm near-black, never pure #000 */
+  --champagne:#1C1410;    /* strongest */
+  --cream:#241A14;        /* body */
+  --muted:#6A5C4E;        /* secondary  (5.7:1 on paper) */
+  --muted-2:#756555;      /* tertiary   (4.6:1 on paper) */
+
+  /* brass reads as metal on paper; the bright golds only work on lacquer */
+  --gold:#8A6A1F;         /* 4.4:1 — headings, rules, large text */
+  --gold-bright:#A8832B;
+  --gold-deep:#6E5317;    /* 6.3:1 — small text */
+  --brass:#8A6A1F;
+
+  /* brand crimson holds up on paper at 5.0:1 */
+  --red-bright:#B4232F;
+  --wine:#8E1F2A;
+  --wine-bright:#A31F2C;
+
+  --line:rgba(36,26,20,.14);
+  --line-2:rgba(36,26,20,.07);
+  --glass:rgba(252,248,240,.72);
+  --shadow:0 24px 60px -28px rgba(60,42,24,.34);
+  --shadow-gold:0 18px 50px -22px rgba(138,106,31,.30);
+}
+
+/* ---------- The lacquer islands ------------------------------------------
+   Scoped back to the original midnight palette. Anything inside these keeps
+   working exactly as it did, because only the tokens change.              */
+.lacquer,.hero,.page-hero,.player,.site-footer{
+  --night:#050303;
+  --ink:#0B0807;
+  --ink-2:#120D0B;
+  --ink-3:#1A1211;
+  --ink-4:#241917;
+  --ember:#2A1614;
+  --champagne:#F3E7C8;
+  --cream:#F7F2E6;
+  --muted:#B7ACA1;
+  --muted-2:#968B81;
+  --gold:#E7C572;
+  --gold-bright:#F6DE98;
+  --gold-deep:#B58E44;
+  --brass:#C9A24B;
+  --red-bright:#EE5C69;
+  --wine:#7B1E24;
+  --wine-bright:#EE5C69;
+  --line:rgba(231,197,114,.16);
+  --line-2:rgba(247,242,230,.08);
+  --shadow:0 30px 80px -30px rgba(0,0,0,.8);
+  color:var(--cream);
+}
+
+body{background:var(--ink);color:var(--cream);}
+
+/* headings and emphasis were hardcoded #fff for the dark base */
+h1,h2,h3,h4{color:var(--champagne);}
+strong{color:var(--champagne);}
+.lacquer h1,.lacquer h2,.lacquer h3,.lacquer h4,
+.hero h1,.hero h2,.page-hero h1,.site-footer h3{color:#fff;}
+
+::selection{background:rgba(196,43,57,.20);color:var(--champagne);}
+
+/* ---------- Header: transparent over the lacquer hero, paper once scrolled */
+.site-header{
+  /* unscrolled it floats over the lacquer hero, so it keeps the night palette */
+  --cream:#F7F2E6; --champagne:#FFFFFF; --muted:#C6BCB1; --gold:#E7C572;
+  color:var(--cream);
+}
+.nav-links a:hover,.nav-links a.active{color:var(--champagne);}
+.nav-links a.active{color:var(--gold);}
+.site-header.scrolled{
+  --cream:#241A14; --champagne:#1C1410; --muted:#6A5C4E; --gold:#6E5317;
+  background:rgba(250,246,238,.88);
+  border-bottom-color:var(--line);
+  box-shadow:0 10px 34px -22px rgba(60,42,24,.45);
+}
+.site-header.scrolled .brand-script{color:var(--champagne);}
+.site-header.scrolled .nav-links a{color:var(--muted);}
+.site-header.scrolled .nav-links a:hover,
+.site-header.scrolled .nav-links a.active{color:var(--champagne);}
+.site-header.scrolled .nav-links a.active{color:var(--gold-deep);}
+.site-header.scrolled .btn-ghost{color:var(--cream);border-color:var(--line);}
+.brand-script{color:#fff;}
+.site-header.scrolled .nav-toggle span{background:var(--cream);}
+
+/* ---------- Components that assumed a dark ground ------------------------ */
+.hero-meta b,.np-info .np-show,.sched-row .s-show,
+.quote blockquote,.event-date .d,.played-row.is-current .pl-meta b,
+.sched-tabs button:hover{color:var(--champagne);}
+.btn-ghost:hover{color:var(--champagne);background:rgba(138,106,31,.08);}
+.footer-col a:hover,.footer-contact a:hover{color:#fff;}
+
+/* forms were dark wells */
+.form input,.form textarea,.form select,.subscribe input{
+  background:rgba(255,255,255,.9);border-color:var(--line);color:var(--cream);
+}
+.form input::placeholder,.form textarea::placeholder,.subscribe input::placeholder{color:var(--muted-2);}
+
+/* gold washes are invisible on paper — warm them into the ground */
+.card{background:linear-gradient(168deg,var(--ink-3),var(--ink-2) 70%);}
+.stats .stat{background:linear-gradient(180deg,var(--ink-2),var(--ink));}
+.stats .stat:hover{background:linear-gradient(180deg,var(--ink-3),var(--ink-2));}
+.sched-row{background:linear-gradient(90deg,var(--ink-2),var(--ink) 70%);}
+.stat .num{text-shadow:none;}
+.surface{background:
+  radial-gradient(1200px 600px at 80% -10%,rgba(138,106,31,.07),transparent 60%),
+  linear-gradient(180deg,var(--ink),var(--ink-2));}
+.surface-deep{background:linear-gradient(180deg,var(--ink-2),var(--ink));}
+.cta-band{background:
+  radial-gradient(120% 140% at 50% 0%,rgba(138,106,31,.10),transparent 62%),
+  linear-gradient(180deg,var(--ink-3),var(--ink-2));}
+.pill-live{color:var(--wine-bright);border-color:rgba(163,31,44,.34);background:rgba(163,31,44,.08);}
+.lacquer .pill-live,.hero .pill-live,.player .pill-live{color:#fff;}
+
+/* the marquee is display type, not body copy — give it full ink on paper */
+.marquee-track span{color:var(--cream);opacity:.78;}
+.marquee-track span::after{color:var(--gold-bright);}
+.marquee{background:linear-gradient(90deg,var(--ink-2),var(--ink-3) 50%,var(--ink-2));}
+
+/* ---------- Forms: these are .field, not .form — dark wells on paper ------ */
+.field input,.field textarea,.field select,.subscribe input{
+  background:#FFFDF8;border:1px solid rgba(36,26,20,.18);color:var(--cream);
+}
+.field input:focus,.field textarea:focus,.field select:focus,.subscribe input:focus{
+  background:#fff;border-color:var(--gold);box-shadow:0 0 0 4px rgba(138,106,31,.14);
+}
+.field input::placeholder,.field textarea::placeholder,.subscribe input::placeholder{color:var(--muted-2);}
+.field label{color:var(--gold-deep);}
+.form-status.ok{background:rgba(138,106,31,.10);border-color:rgba(138,106,31,.3);color:var(--champagne);}
+.form-status.err{background:rgba(163,31,44,.10);border-color:rgba(163,31,44,.35);color:#7E1420;}
+
+/* ---------- Decorative frames were black boxes floating on paper --------- */
+.deco-frame{
+  background:radial-gradient(120% 100% at 30% 0%,#FFFDF8,#F1E8D8 72%);
+  border-color:rgba(138,106,31,.28);
+  box-shadow:0 26px 60px -34px rgba(60,42,24,.45);
+}
+.host-medallion{background:radial-gradient(circle at 50% 32%,#FFFDF8,#EFE4D2 74%);}
+.host-medallion .mono{color:var(--gold-deep);}
+
+/* the vinyl is an object, not a surface — it stays black, but its frame lifts */
+.deco-frame .vinyl-wrap,.np-card .vinyl-wrap{filter:drop-shadow(0 18px 30px rgba(60,42,24,.30));}
+
+/* .pill sits on the tinted card ground, where brass lands at 4.4:1 — go a
+   step deeper so small caps clear 4.5:1. */
+.pill{color:var(--gold-deep);}
+.lacquer .pill,.hero .pill,.page-hero .pill,.player .pill{color:var(--gold);}
