@@ -1,0 +1,54 @@
+{
+ "fetched": "2026-09-11",
+ "source": "https://legendsradio.com/wp-json/tribe/events/v1/events",
+ "events": [
+  {
+   "id": "4501",
+   "title": "Free Tribute Concert Series at Abacoa \u2013 60\u2019s & 70\u2019s Classic Rock",
+   "start": "2026-09-19 19:30:00",
+   "end": "2026-09-19 22:30:00",
+   "all_day": false,
+   "url": "https://legendsradio.com/event/free-tribute-concert-series-at-abacoa-60s-70s-classic-rock/",
+   "cost": "",
+   "venue": "Abacoa Amphitheater",
+   "address": "1267 Main Street Jupiter FL 33458",
+   "blurb": "60\u2019s & 70\u2019s Classic Rock \u2014 Free concert Optional Reserved Seats: Buy Here All concerts begin at 7:30 p.m. at the Downtown Abacoa Amphitheater: 1267 Main St, Jupiter, FL 33458 . Admission is free!"
+  },
+  {
+   "id": "4503",
+   "title": "Free Tribute Concert Series at Abacoa \u2013 Rolling Stones",
+   "start": "2026-10-17 19:30:00",
+   "end": "2026-10-17 22:30:00",
+   "all_day": false,
+   "url": "https://legendsradio.com/event/free-tribute-concert-series-at-abacoa-rolling-stones/",
+   "cost": "",
+   "venue": "Abacoa Amphitheater",
+   "address": "1267 Main Street Jupiter FL 33458",
+   "blurb": "Rolling Stones \u2014 Free concert Optional Reserved Seats: Buy Here All concerts begin at 7:30 p.m. at the Downtown Abacoa Amphitheater: 1267 Main St, Jupiter, FL 33458 . Admission is free!"
+  },
+  {
+   "id": "4504",
+   "title": "Free Tribute Concert Series at Abacoa \u2013 Eagles",
+   "start": "2026-11-21 19:30:00",
+   "end": "2026-11-21 22:30:00",
+   "all_day": false,
+   "url": "https://legendsradio.com/event/free-tribute-concert-series-at-abacoa-eagles/",
+   "cost": "",
+   "venue": "Abacoa Amphitheater",
+   "address": "1267 Main Street Jupiter FL 33458",
+   "blurb": "The Eagles \u2014 Free concert Optional Reserved Seats: Buy Here All concerts begin at 7:30 p.m. at the Downtown Abacoa Amphitheater: 1267 Main St, Jupiter, FL 33458 . Admission is free!"
+  },
+  {
+   "id": "4507",
+   "title": "Free Tribute Concert Series at Abacoa \u2013 KISS",
+   "start": "2026-12-19 19:30:00",
+   "end": "2026-12-19 22:30:00",
+   "all_day": false,
+   "url": "https://legendsradio.com/event/free-tribute-concert-series-at-abacoa-kiss/",
+   "cost": "",
+   "venue": "Abacoa Amphitheater",
+   "address": "1267 Main Street Jupiter FL 33458",
+   "blurb": "KISS \u2014 Free concert Optional Reserved Seats: Buy Here All concerts begin at 7:30 p.m. at the Downtown Abacoa Amphitheater: 1267 Main St, Jupiter, FL 33458 . Admission is free!"
+  }
+ ]
+}
