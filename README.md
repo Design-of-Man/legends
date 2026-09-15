@@ -438,3 +438,67 @@ Paper is `#F7F2E7`, not `#fff` — pure white is clinical under Playfair.
   scanning before the scroll-reveal transition settles produces false
   positives, since axe blends the half-faded foreground — force
   `.reveal{opacity:1}` before measuring.
+
+## 2026-09 — photos, a live rail, and an archive you can actually browse
+
+### Host photo crops
+Three portraits are tall (Mike McGann 400×600, Alex Donner 360×504, Bob Merrill
+250×340). A square centre-crop in the round medallion landed on the chest —
+Mike's head was cut off entirely. Each host now carries a `focus` value (the
+face centre as a % of image height), applied as `object-position`, and the
+programme cards crop square so those same values hold.
+
+### What's playing, with the cover
+The Listen page led with a generic spinning vinyl. It now carries an **On Air
+Now panel**: the actual cover art from the station's streaming vendor, the
+track and artist set large, then the show, host and slot. The record slides out
+from behind the sleeve on hover. Falls back to the vinyl on the ~40% of tracks
+with no cover, and the track line hides entirely during ad breaks.
+
+The artist separator (` · `) moved from JS into CSS, so the compact strip keeps
+it and the big panel doesn't.
+
+### Shows
+Cards were text-only. They now lead with the **host's portrait**, and shows
+without one get a monogram plate rather than a grey box. A **live rail** sits
+under the hero: who is on, their photo, a progress bar through the slot, and
+what follows — recomputed every 30s from the same Eastern-time engine that
+drives the player. The matching card marks itself `is-live`.
+
+**A real bug this exposed:** `var` is function-scoped, and the scroll-progress
+bar at the top of the page already used `var rail`. Declaring `var rail` again
+for the live rail reassigned the *same* variable, so the scroll handler wrote
+its percentage into the live rail's `style.width` — the rail shrank as you
+scrolled, down to 56px. Renamed to `liveRail`.
+
+### Photo strip
+A rolling, full-bleed strip of station photography on the homepage.
+
+**On Instagram:** a live feed needs an Instagram Graph API token the station has
+to issue — Basic Display was retired at the end of 2024. Without one there is
+no way to read the account. So the component is source-agnostic: it renders
+`assets/data/photos.json` at build time and can be repointed at any endpoint
+returning the same shape.
+
+Today that cache is the station's **own Flickr** (`158689475@N04`, linked from
+their footer). Worth knowing: **all 20 photos are from a single day,
+2018-06-29** — one event shoot, not a rolling feed. It is labelled as event
+photography rather than "latest from Instagram" for that reason. Flickr's feed
+also sends no `Access-Control-Allow-Origin`, so it can only be read at build
+time, never live in the browser.
+
+### On-Demand
+Was a flat list of three show blocks that didn't explain itself. Now:
+- the hero says plainly what it is — *"Shows you missed, kept online to play
+  whenever you like"*
+- every episode is a card with the show's portrait, a type label and inline
+  playback
+- **filter chips** (All 7 / Interview 4 / Full show 3) driven off a `type` on
+  each episode
+- the shows with nothing posted are framed as "catch these on the air" rather
+  than an apology
+
+### Verified
+- axe 0 violations · 0 JS errors · 0 horizontal overflow — 25 pages × desktop + mobile
+- Links, assets, alt text, `<h1>`, titles, JSON-LD: clean
+- Filters, live rail, album art and episode playback all exercised in-browser

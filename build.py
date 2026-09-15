@@ -164,10 +164,10 @@ PROGRAMS = [
      "blurb": "Sunday late morning with a long table, a longer playlist and the occasional "
               "remarkable guest.",
      "audio": [
-        {"kind": "soundcloud", "title": "Sunday Legends Brunch — Ken Langone",
+        {"kind": "soundcloud", "type": "Interview", "title": "Sunday Legends Brunch — Ken Langone",
          "url": "https://soundcloud.com/legendsradio/sunday-brunch-ken-langone",
          "note": "The Home Depot co-founder in conversation."},
-        {"kind": "soundcloud", "title": "Sunday Legends Brunch — Dick Robinson",
+        {"kind": "soundcloud", "type": "Interview", "title": "Sunday Legends Brunch — Dick Robinson",
          "url": "https://soundcloud.com/legendsradio/sunday-legends-brunch-dick-robinson",
          "note": "The station's founder on the Songbook and the Palm Beaches."},
      ], "video": []},
@@ -208,11 +208,11 @@ PROGRAMS = [
      "blurb": "Full-length shows from the station's international hour, kept online in their "
               "entirety.",
      "audio": [
-        {"kind": "mp3", "title": "Full Show — 20 May 2023", "date": "2023-05-20",
+        {"kind": "mp3", "type": "Full show", "title": "Full Show — 20 May 2023", "date": "2023-05-20",
          "url": "https://legendsradio.com/wp-content/uploads/2024/05/Legends-May-20-2023-Full-Show.mp3"},
-        {"kind": "mp3", "title": "Full Show — 26 August 2023", "date": "2023-08-26",
+        {"kind": "mp3", "type": "Full show", "title": "Full Show — 26 August 2023", "date": "2023-08-26",
          "url": "https://legendsradio.com/wp-content/uploads/2024/05/Legends-Aug-26-2023-Full-Show.mp3"},
-        {"kind": "mp3", "title": "Veterans Day Full Show — 11 November 2023", "date": "2023-11-11",
+        {"kind": "mp3", "type": "Full show", "title": "Veterans Day Full Show — 11 November 2023", "date": "2023-11-11",
          "url": "https://legendsradio.com/wp-content/uploads/2024/05/Legends-Nov-11-2023-Veterans-Day-Full-Show.mp3"},
      ], "video": []},
 
@@ -221,10 +221,10 @@ PROGRAMS = [
      "slot": "From the archive", "days": "Archive", "time": "Interview series",
      "blurb": "Conversations with the people who made the Palm Beaches what they are.",
      "audio": [
-        {"kind": "soundcloud", "title": "Ken Langone",
+        {"kind": "soundcloud", "type": "Interview", "title": "Ken Langone",
          "url": "https://soundcloud.com/legendsradio/sunday-brunch-ken-langone",
          "note": "Co-founder of The Home Depot."},
-        {"kind": "soundcloud", "title": "Dick Robinson",
+        {"kind": "soundcloud", "type": "Interview", "title": "Dick Robinson",
          "url": "https://soundcloud.com/legendsradio/sunday-legends-brunch-dick-robinson",
          "note": "Founder of Legends Radio."},
      ], "video": []},
@@ -367,7 +367,7 @@ HOSTS = [
                "cabaret, <em>Supper Club with Jill &amp; Rich</em>.",
     },
     {
-        "slug": "mike-mcgann", "name": "Mike McGann", "mono": "MM",
+        "slug": "mike-mcgann", "focus": "50% 17%", "name": "Mike McGann", "mono": "MM",
         "role": "Weekday Middays", "show": "Middays with Mike McGann", "slot": "Weekdays · 10 AM – 2 PM",
         "photo": "assets/hosts/mike-mcgann.jpg",
         "persons": ["Mike McGann"],
@@ -384,7 +384,7 @@ HOSTS = [
                "mid-afternoon through the evening commute.",
     },
     {
-        "slug": "alex-donner", "name": "Alex Donner", "mono": "AD",
+        "slug": "alex-donner", "focus": "50% 30%", "name": "Alex Donner", "mono": "AD",
         "role": "Weekday Evenings", "show": "Evenings with Alex Donner", "slot": "Weekdays · 7–9 PM",
         "photo": "assets/hosts/alex-donner.jpg",
         "persons": ["Alex Donner"],
@@ -392,7 +392,7 @@ HOSTS = [
                "front end of the night.",
     },
     {
-        "slug": "bob-merrill", "name": "Bob Merrill", "mono": "BM",
+        "slug": "bob-merrill", "focus": "50% 24%", "name": "Bob Merrill", "mono": "BM",
         "role": "Weeknights & Sundays", "show": "Legends After Dark", "slot": "Weeknights · 9–11 PM",
         "photo": "assets/hosts/bob-merrill.jpg",
         "persons": ["Bob Merrill"],
@@ -417,7 +417,7 @@ HOSTS = [
         "bio": "Popeye hosts <em>Legends of Jazz</em>, the station's dedicated jazz programme.",
     },
     {
-        "slug": "cindy-hite", "name": "Cindy Hite", "mono": "CH",
+        "slug": "cindy-hite", "focus": "50% 32%", "name": "Cindy Hite", "mono": "CH",
         "role": "Cindy on Legends", "show": "Cindy on Legends", "slot": "Weekly",
         "photo": "assets/hosts/cindy-hite.jpg",
         "persons": ["Cindy Hite"],
@@ -717,6 +717,7 @@ def document(filename, title, desc, body, active, extra_schema=None, og_image="l
         "window.LEGENDS_ARTWORK=" + json.dumps(BASE + "/assets/img/legends-artwork.png") + ";"
         "window.LEGENDS_NOWPLAYING=" + json.dumps(NOW_PLAYING_URL) + ";"
         "window.LEGENDS_HISTORY=" + json.dumps(PLAY_HISTORY_URL) + ";"
+        "window.LEGENDS_SHOWART=" + json.dumps(show_art_map(), ensure_ascii=False) + ";"
     )
     schema = jsonld(breadcrumb(crumb_name or crumb_label(filename, title.split(" | ")[0]), filename, crumb_trail)
                     if filename not in ("index.html", "404.html") else None,
@@ -854,8 +855,10 @@ EVENTS = [
 
 def host_card(h, idx=0, full=False):
     persons = ""
-    img = ('<img src="%s" alt="%s, %s on Legends Radio 100.3 FM" loading="lazy" decoding="async">'
-           % (h["photo"], html.escape(h["name"]), html.escape(h["role"]))) if h.get("photo") else ""
+    # tall portraits need a focal point or the round crop lands on the chest
+    pos = (' style="object-position:%s"' % h["focus"]) if h.get("focus") else ""
+    img = ('<img src="%s" alt="%s, %s on Legends Radio 100.3 FM" loading="lazy" decoding="async"%s>'
+           % (h["photo"], html.escape(h["name"]), html.escape(h["role"]), pos)) if h.get("photo") else ""
     bio = ('<p class="host-bio">%s</p>' % h["bio"]) if full else ""
     # Their show now has a page — make the show line the way through to it.
     pslug = program_slug_for(h.get("show"))
@@ -873,25 +876,134 @@ def host_card(h, idx=0, full=False):
     ) % (idx % 4, img, h["mono"], html.escape(h["role"]), html.escape(h["name"]),
          show_line, html.escape(h["slot"]), bio)
 
-def show_card(sig, idx=0):
-    """Card for one programme. Links through to that show's own page when it
-    has one (every entry in PROGRAMS does)."""
-    href = program_file(sig["slug"]) if sig.get("slug") else None
-    inner = (
-        '<span class="pill">%s</span>'
-        '<h3 style="margin:.9rem 0 .3rem">%s</h3>'
-        '<p style="color:var(--gold);font-weight:600;font-size:.92rem;margin-bottom:.6rem">%s</p>'
-        '<p style="color:var(--muted);font-size:.95rem">%s</p>'
-    ) % (html.escape(sig["slot"]), html.escape(sig["name"]),
-         html.escape(sig["host"]), sig["blurb"])
-    if not href:
-        return '<article class="card reveal reveal-d%d">%s</article>' % (idx % 4, inner)
+def load_photos():
+    """Station photography, cached at build time.
+
+    Source today is the station's own Flickr. A live Instagram feed needs a
+    Graph API token the station has to issue, so this is deliberately
+    swappable: point `window.LEGENDS_PHOTOS` at any endpoint returning the
+    same shape and the strip re-renders from it at runtime.
+    """
+    try:
+        with open(os.path.join(ROOT, "assets", "data", "photos.json"), encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return {"photos": []}
+
+
+def photo_strip():
+    data = load_photos()
+    photos = data.get("photos", [])
+    if not photos:
+        return ""
+    # doubled so the marquee can loop seamlessly
+    def tile(p, dup=False):
+        return (
+            '<a class="ph" href="%s" target="_blank" rel="noopener"%s>'
+            '<img src="%s" alt="%s" loading="lazy" decoding="async" width="300" height="300">'
+            '</a>'
+        ) % (html.escape(p["link"], quote=True),
+             ' aria-hidden="true" tabindex="-1"' if dup else "",
+             html.escape(p["thumb"], quote=True),
+             html.escape(p["title"] or "Legends Radio event photograph", quote=True))
+
+    tiles = "".join(tile(p) for p in photos)
+    dupes = "".join(tile(p, True) for p in photos)
     return (
-        '<article class="card show-card reveal reveal-d%d">'
-        '<a class="show-card-link" href="%s">%s'
-        '<span class="show-card-go">Show page %s</span></a>'
-        '</article>'
-    ) % (idx % 4, href, inner, IC["arrow"])
+        '<section class="section-tight photos-sec" id="gallery">'
+        '<div class="container"><div class="section-head center">'
+        '<span class="eyebrow centered">Out in the Palm Beaches</span>'
+        '<h2>Legends, in the room</h2>'
+        '<p class="lede mx-auto" style="margin-inline:auto">Galas, live broadcasts and concert nights — '
+        'the station out from behind the microphone.</p></div></div>'
+        '<div class="photos" data-photos>'
+        '<div class="photos-track" data-photos-track>' + tiles + dupes + '</div>'
+        '</div>'
+        '<div class="container"><p class="photos-cta">'
+        '<a href="' + STATION["instagram"] + '" target="_blank" rel="noopener">'
+        'Follow @legendsradio100.3 ' + IC["insta"] + '</a></p></div>'
+        '</section>'
+    )
+
+def show_art_map():
+    """Schedule show-name -> portrait + page, so the live rail can illustrate
+    whatever is on air without a second round trip."""
+    out = {}
+    for prog in PROGRAMS:
+        host = next((h for h in HOSTS if h["slug"] == prog.get("host_slug")), None)
+        out[prog["name"]] = {
+            "photo": (host or {}).get("photo", ""),
+            "focus": (host or {}).get("focus", "50% 30%"),
+            "href": program_file(prog["slug"]),
+            "host": prog["host"],
+        }
+    return out
+
+
+def show_art(prog, cls=""):
+    """Image for a programme card. Uses the host's portrait with their focal
+    point; shows without a portrait get a designed monogram plate rather than a
+    grey box."""
+    host = next((h for h in HOSTS if h["slug"] == prog.get("host_slug")), None)
+    if host and host.get("photo"):
+        pos = (' style="object-position:%s"' % host["focus"]) if host.get("focus") else ""
+        return ('<div class="sc-photo %s"><img src="%s" alt="" loading="lazy" decoding="async"%s>'
+                '<span class="sc-scrim" aria-hidden="true"></span></div>'
+                % (cls, host["photo"], pos))
+    initials = "".join(w[0] for w in re.sub(r"[^A-Za-z ]", "", prog["name"]).split()[:2]).upper()
+    return ('<div class="sc-photo sc-photo-mono %s"><span class="sc-mono" aria-hidden="true">%s</span>'
+            '<span class="sc-scrim" aria-hidden="true"></span></div>' % (cls, html.escape(initials)))
+
+
+def show_card(sig, idx=0):
+    """Programme card — portrait-led, and able to mark itself live on air."""
+    href = program_file(sig["slug"]) if sig.get("slug") else None
+    # format first, then prepend the art — the art carries literal % in
+    # object-position and would otherwise be eaten by the format operator
+    body = (
+        '<div class="sc-body">'
+        '<span class="sc-slot">%s</span>'
+        '<h3 class="sc-name">%s</h3>'
+        '<p class="sc-host">%s</p>'
+        '<p class="sc-blurb">%s</p>'
+        '<span class="sc-live"><span class="dot-live"></span> On air now</span>'
+        '</div>'
+    ) % (html.escape(sig["slot"]), html.escape(sig["name"]), html.escape(sig["host"]), sig["blurb"])
+    inner = show_art(sig) + body
+    if not href:
+        return '<article class="card show-card reveal reveal-d' + str(idx % 4) + '">' + inner + '</article>' 
+    head = ('<article class="card show-card reveal reveal-d%d" data-show-name="%s">'
+            '<a class="show-card-link" href="%s">'
+            % (idx % 4, html.escape(sig["name"], quote=True), href))
+    return head + inner + '<span class="show-card-go">Show page ' + IC["arrow"] + '</span></a></article>' 
+
+
+def live_rail():
+    """A wide, self-updating band at the top of Shows: what is on right now,
+    how far through it is, and what follows. Filled by legends.js from the same
+    Eastern-time engine that drives the player."""
+    return (
+        '<section class="section-tight live-rail-sec"><div class="container">'
+        '<div class="live-rail" data-live-rail hidden>'
+        '<a class="lr-link" data-lr-link href="shows.html">'
+        '<div class="lr-photo" data-lr-photo aria-hidden="true"></div>'
+        '<div class="lr-body">'
+        '<span class="pill pill-live"><span class="dot-live"></span> On air now</span>'
+        '<h2 class="lr-show" data-lr-show></h2>'
+        '<p class="lr-host" data-lr-host></p>'
+        '<div class="lr-bar" aria-hidden="true"><span data-lr-progress></span></div>'
+        '<p class="lr-times"><span data-lr-times></span></p>'
+        '</div></a>'
+        '<div class="lr-next">'
+        '<span class="lr-next-lbl">Up next</span>'
+        '<b class="lr-next-show" data-lr-next></b>'
+        '<span class="lr-next-time" data-lr-next-time></span>'
+        '<button class="btn btn-primary btn-sm" data-play data-play-label-text="Listen Live">'
+        '<span class="eq eq-mini" aria-hidden="true"><i></i><i></i><i></i></span>'
+        '<span data-play-label>Listen Live</span></button>'
+        '</div></div></div></section>'
+    )
+
 
 def event_card(ev, idx=0):
     return (
@@ -1014,7 +1126,7 @@ def home_page():
         + listen_options_grid() +
         '</div></section>'
     )
-    body = hero + marquee() + stats + intro + shows + hosts + events + listen + patron_ribbon() + newsletter_block() + cta_band(
+    body = hero + marquee() + stats + intro + shows + hosts + photo_strip() + events + listen + patron_ribbon() + newsletter_block() + cta_band(
         "Pour a drink. Turn it up.",
         "The Great American Songbook is playing right now on 100.3 FM — and streaming worldwide.",
         secondary=("shows.html", "Browse Shows"))
@@ -1026,25 +1138,48 @@ def home_page():
                     extra_schema={"@type": "WebSite", "@id": BASE + "/#website", "url": BASE + "/",
                                   "name": STATION["name"], "publisher": {"@id": BASE + "/#station"}})
 
+def onair_panel():
+    """The Listen page's centrepiece: what is actually playing right now, with
+    the cover art the station's own streaming vendor publishes. Falls back to
+    the spinning vinyl on the ~40% of tracks that carry no cover, and hides the
+    track line entirely during ad breaks and talk."""
+    return (
+        '<section class="section"><div class="container">'
+        '<div class="onair reveal">'
+        '<div class="onair-art">'
+        '<div class="onair-disc" aria-hidden="true"></div>'
+        + art_slot(300, "onair-cover") +
+        '</div>'
+        '<div class="onair-body">'
+        '<span class="pill pill-live"><span class="dot-live"></span> Streaming Live</span>'
+        '<div class="onair-track" data-track hidden>'
+        '<b class="oa-title" data-track-title></b>'
+        '<span class="oa-artist" data-track-artist></span>'
+        '</div>'
+        '<div class="onair-show">'
+        '<span class="onair-lbl">On air now</span>'
+        '<div class="np-show" id="np-show">Nonstop Legends</div>'
+        '<div class="np-host" id="np-host">The Great American Songbook</div>'
+        '<div class="np-time" id="np-time"></div>'
+        '</div>'
+        '<div class="onair-actions">'
+        '<button class="btn btn-primary btn-lg" data-play data-play-label-text="Listen Live">'
+        '<span class="eq eq-mini" aria-hidden="true"><i></i><i></i><i></i></span>'
+        '<span data-play-label>Listen Live</span></button>'
+        '<a class="btn btn-ghost btn-lg" href="#recently-played">Just played ' + IC["arrow"] + '</a>'
+        '</div>'
+        '<p class="form-note">Or tune to <strong>100.3 FM</strong> across the Palm Beaches &middot; '
+        'Prefer a pop-out? <a href="' + STATION["popout"] + '" target="_blank" rel="noopener">open the player</a></p>'
+        '</div></div></div></section>'
+    )
+
+
 def listen_page():
     hero = page_hero("Listen Live", "Tune the Palm Beaches in.",
                      "One tap and the Great American Songbook is playing — online, on your phone, on your radio, "
                      "or through your smart speaker.", "listen.html")
-    big = (
-        '<section class="section"><div class="container"><div class="cta-band reveal" style="text-align:center">'
-        '<div class="np-head" style="justify-content:center;gap:1rem"><span class="pill pill-live"><span class="dot-live"></span> Streaming Live</span></div>'
-        '<div style="display:flex;flex-direction:column;align-items:center;gap:1.4rem;margin-top:1.4rem">'
-        '<div class="vinyl-wrap"><div class="vinyl" style="--s:min(240px,58vw)"></div><div class="sheen"></div></div>'
-        '<div><div class="np-show" id="np-show" style="font-size:1.8rem">Nonstop Legends</div>'
-        '<div class="np-host" id="np-host" style="font-size:1rem;margin-top:.3rem">The Great American Songbook</div>'
-        '<div class="np-time" id="np-time" style="margin-top:.4rem"></div></div>'
-        '<button class="btn btn-primary btn-lg" data-play data-play-label-text="Listen Live">'
-        '<span class="eq eq-mini" aria-hidden="true"><i></i><i></i><i></i></span>'
-        '<span data-play-label>Listen Live</span></button>'
-        '<p class="form-note">Or tune to <strong>100.3 FM</strong> across the Palm Beaches · Prefer a pop-out? '
-        '<a href="' + STATION["popout"] + '" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline">open the player</a></p>'
-        '</div></div></div></section>'
-    )
+    big = onair_panel()
+
     ways = (
         '<section class="section surface"><div class="container">'
         '<div class="section-head center"><span class="eyebrow centered">Ways to Listen</span>'
@@ -1212,7 +1347,7 @@ def shows_page():
                                       "item": {"@type": "RadioSeries", "name": s["name"],
                                                "url": BASE + "/" + program_file(s["slug"])}}
                                      for i, s in enumerate(PROGRAMS)]}
-    body = hero + sig + grid + sponsored_block() + cta_band("Hear it live",
+    body = hero + live_rail() + sig + grid + sponsored_block() + cta_band("Hear it live",
                                         "Whatever’s on right now, it’s the best music ever made — playing on 100.3 FM.",
                                         secondary=("hosts.html", "Meet the Hosts"))
     return document("shows.html",
@@ -1458,41 +1593,86 @@ def events_page():
                     extra_schema=(ld if len(ld) != 1 else ld[0]) if ld else None)
 
 
+def all_episodes():
+    """Flatten every real episode across the schedule, newest-looking first."""
+    out = []
+    for prog in PROGRAMS:
+        for ep in (prog.get("audio") or []):
+            e = dict(ep); e["prog"] = prog
+            e.setdefault("type", "Episode")
+            out.append(e)
+    return out
+
+
+def od_card(ep, idx=0):
+    prog = ep["prog"]
+    is_mp3 = ep["kind"] == "mp3"
+    if is_mp3:
+        control = (
+            '<button class="od-play" data-ep-play aria-label="Play %s">'
+            '<span class="ic-play">%s</span><span class="ic-pause">%s</span></button>'
+        ) % (html.escape(ep["title"], quote=True), IC["play"], IC["pause"])
+        scrub = ('<div class="od-scrub"><div class="ep-rail" data-ep-rail role="presentation">'
+                 '<div class="ep-fill" data-ep-fill></div></div>'
+                 '<span class="ep-time"><span data-ep-now>0:00</span> / <span data-ep-dur>&mdash;&mdash;</span></span></div>')
+        wrap_open = ('<li class="od-card reveal reveal-d%d" data-od-type="%s" data-episode data-src="%s">'
+                     % (idx % 4, html.escape(ep["type"], quote=True), html.escape(ep["url"], quote=True)))
+    else:
+        control = (
+            '<button class="od-play" data-sc-load '
+            'data-sc-url="https://w.soundcloud.com/player/?url=%s&amp;color=%%238A6A1F&amp;'
+            'hide_related=true&amp;show_comments=false&amp;show_user=true&amp;visual=false" '
+            'aria-label="Load and play %s from SoundCloud"><span class="ic-play">%s</span></button>'
+        ) % (html.escape(ep["url"], quote=True), html.escape(ep["title"], quote=True), IC["play"])
+        scrub = '<p class="od-note">%s<span class="ep-src">SoundCloud</span></p>' % html.escape(ep.get("note", ""))
+        wrap_open = ('<li class="od-card episode episode-sc reveal reveal-d%d" data-od-type="%s">'
+                     % (idx % 4, html.escape(ep["type"], quote=True)))
+
+    meta = (
+        '<div class="od-body">'
+        '<span class="od-type">%s</span>'
+        '<h3 class="od-title">%s</h3>'
+        '<a class="od-show" href="%s">%s</a>'
+        '</div>'
+    ) % (html.escape(ep["type"]), html.escape(ep["title"]),
+         program_file(prog["slug"]), html.escape(prog["name"]))
+
+    return wrap_open + show_art(prog, "od-art") + meta + control + scrub + '</li>'
+
+
 def podcast_page():
-    """The on-demand index: everything that actually exists to listen to, in one
-    place, playable inline — plus an honest account of what doesn't yet."""
-    with_audio = [p for p in PROGRAMS if p.get("audio")]
+    """Listen back: everything the station has posted, in one filterable shelf."""
+    eps = all_episodes()
+    types = []
+    for e in eps:
+        if e["type"] not in types:
+            types.append(e["type"])
     without = [p for p in PROGRAMS if not p.get("audio")]
-    total = sum(len(p["audio"]) for p in with_audio)
 
-    hero = page_hero("On-Demand", "Miss a show? Not anymore.",
-                     "Everything Legends has posted to listen back to, gathered in one place — "
-                     "playable right here, no app required.", "podcast.html")
+    hero = page_hero("On-Demand", "Listen back, any time.",
+                     "Shows you missed, kept online to play whenever you like — full broadcasts and "
+                     "studio interviews, free, straight in the page. Nothing to install.", "podcast.html")
 
-    stat = (
-        '<section class="section-tight"><div class="container-wide"><div class="stats">'
-        '<div class="stat"><div class="num">%d</div><div class="lbl">Episodes On Demand</div></div>'
-        '<div class="stat"><div class="num">%d</div><div class="lbl">Shows In The Archive</div></div>'
-        '<div class="stat"><div class="num">24/7</div><div class="lbl">Live Stream</div></div>'
-        '<div class="stat"><div class="num">100.3</div><div class="lbl">On Your Radio</div></div>'
-        '</div></div></section>'
-    ) % (total, len(with_audio))
+    chips = '<button class="od-chip is-on" data-od-filter="all">All %d</button>' % len(eps)
+    for t in types:
+        chips += '<button class="od-chip" data-od-filter="%s">%s</button>' % (
+            html.escape(t, quote=True), html.escape(t))
 
-    blocks = ""
-    for prog in with_audio:
-        blocks += (
-            '<section class="section"><div class="container">'
-            '<div class="od-head">'
-            '<div><span class="eyebrow">%s</span>'
-            '<h2 style="margin:.5rem 0 .2rem"><a href="%s">%s</a></h2>'
-            '<p class="od-sub">%s</p></div>'
-            '<a class="btn btn-ghost btn-sm" href="%s">Show page %s</a>'
-            '</div>%s</div></section>'
-        ) % (html.escape(prog["slot"]), program_file(prog["slug"]), html.escape(prog["name"]),
-             html.escape(prog["host"]), program_file(prog["slug"]), IC["arrow"],
-             episode_list(prog))
+    shelf = (
+        '<section class="section"><div class="container">'
+        '<div class="od-head">'
+        '<div><span class="eyebrow">The Archive</span>'
+        '<h2 style="margin:.5rem 0 .2rem">Every episode online</h2>'
+        '<p class="od-sub">Press play and it runs right here — the live stream pauses while it does.</p></div>'
+        '<div class="od-chips" role="group" aria-label="Filter episodes">' + chips + '</div>'
+        '</div>'
+        '<ul class="od-grid" data-od-grid>'
+        + "".join(od_card(e, i) for i, e in enumerate(eps)) +
+        '</ul>'
+        '<p class="od-empty" data-od-empty hidden>Nothing in that category yet.</p>'
+        '</div></section>'
+    )
 
-    # Shows with nothing posted yet — said plainly rather than padded out.
     pending = "".join(
         '<li class="pending-row"><a href="%s"><span class="pd-name">%s</span>'
         '<span class="pd-slot">%s</span><span class="pd-go" aria-hidden="true">%s</span></a></li>'
@@ -1500,17 +1680,17 @@ def podcast_page():
         for p in without)
     rest = (
         '<section class="section surface"><div class="container">'
-        '<div class="section-head center"><span class="eyebrow centered">Not Yet Posted</span>'
-        '<h2>Still live-only</h2>'
-        '<p class="lede mx-auto" style="margin-inline:auto">These shows air on 100.3 but have nothing in '
-        'the archive yet. Each page will fill in as the station posts.</p></div>'
+        '<div class="section-head center"><span class="eyebrow centered">Live Only, For Now</span>'
+        '<h2>Catch these on the air</h2>'
+        '<p class="lede mx-auto" style="margin-inline:auto">These shows haven&rsquo;t been posted to the '
+        'archive yet. Each page fills in as the station adds them.</p></div>'
         '<ul class="pending">' + pending + '</ul>'
         '<p class="form-note center mt-4">The station also keeps an archive on '
-        '<a href="' + STATION["soundcloud"] + '" target="_blank" rel="noopener" style="color:var(--gold)">SoundCloud</a>.</p>'
+        '<a href="' + STATION["soundcloud"] + '" target="_blank" rel="noopener">SoundCloud</a>.</p>'
         '</div></section>'
     )
 
-    body = hero + stat + blocks + rest + cta_band(
+    body = hero + shelf + rest + cta_band(
         "Prefer it live?",
         "The Great American Songbook is playing right now on 100.3 FM.",
         secondary=("shows.html", "See the Schedule"))
@@ -1792,8 +1972,9 @@ def program_page(prog):
     # --- host ------------------------------------------------------------
     host_block = ""
     if host_obj:
-        photo = ('<img src="%s" alt="%s" width="360" height="360" loading="lazy" decoding="async">'
-                 % (host_obj["photo"], html.escape(host_obj["name"], quote=True))) if host_obj.get("photo") else \
+        fpos = (' style="object-position:%s"' % host_obj["focus"]) if host_obj.get("focus") else ""
+        photo = ('<img src="%s" alt="%s" width="360" height="360" loading="lazy" decoding="async"%s>'
+                 % (host_obj["photo"], html.escape(host_obj["name"], quote=True), fpos)) if host_obj.get("photo") else \
                 ('<span class="mono">%s</span>' % html.escape(host_obj["mono"]))
         host_block = (
             '<section class="section surface"><div class="container"><div class="split">'

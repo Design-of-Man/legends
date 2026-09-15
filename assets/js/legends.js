@@ -360,7 +360,7 @@
       var t = $("[data-track-title]", row), a = $("[data-track-artist]", row);
       if (song) {
         if (t) t.textContent = song.title;
-        if (a) a.textContent = song.artist ? " · " + song.artist : "";
+        if (a) a.textContent = song.artist || "";   // the separator is CSS, so the big panel can drop it
         row.hidden = false;
       } else { row.hidden = true; }
     });
@@ -622,6 +622,75 @@
       showLive.hidden = !on;
     };
     checkLive(); setInterval(checkLive, 30000);
+  }
+
+
+  /* ---------------- live rail: what's on, how far through, what's next ---- */
+  var liveRail = $("[data-live-rail]");
+  if (liveRail && Object.keys(SCHEDULE).length) {
+    var ART = window.LEGENDS_SHOWART || {};
+    var artFor = function (name) {
+      if (ART[name]) return ART[name];
+      var n = (name || "").toLowerCase();
+      for (var k in ART) {                       // schedule titles are fuller than programme names
+        var kn = k.toLowerCase();
+        if (n.indexOf(kn) > -1 || kn.indexOf(n) > -1) return ART[k];
+      }
+      return null;
+    };
+    var paintRail = function () {
+      var cur = currentSlot();
+      if (!cur) { liveRail.hidden = true; return; }
+      liveRail.hidden = false;
+      var nxt = nextSlot(cur), a = artFor(cur.slot.show);
+      var ph = $("[data-lr-photo]", liveRail);
+      if (ph) {
+        if (a && a.photo) {
+          ph.style.backgroundImage = 'url("' + a.photo + '")';
+          ph.style.backgroundPosition = a.focus || "50% 30%";
+          ph.classList.remove("is-empty");
+        } else { ph.style.backgroundImage = ""; ph.classList.add("is-empty"); }
+      }
+      var setT = function (sel, v) { var e = $(sel, liveRail); if (e) e.textContent = v; };
+      setT("[data-lr-show]", cur.slot.show);
+      setT("[data-lr-host]", cur.slot.host || "");
+      setT("[data-lr-times]", fmt(cur.slot.start) + " – " + fmt(cur.slot.end) + " ET");
+      setT("[data-lr-next]", nxt ? nxt.show : "");
+      setT("[data-lr-next-time]", nxt ? "at " + fmt(nxt.start) : "");
+      var pct = ((cur.now - cur.start) / (cur.end - cur.start)) * 100;
+      var bar = $("[data-lr-progress]", liveRail);
+      if (bar) bar.style.width = Math.max(1.5, Math.min(100, pct)) + "%";
+      var link = $("[data-lr-link]", liveRail);
+      if (link) link.setAttribute("href", (a && a.href) || "shows.html");
+
+      // mark the matching programme card as live
+      $$("[data-show-name]").forEach(function (c) {
+        var n = (c.dataset.showName || "").toLowerCase();
+        var s = (cur.slot.show || "").toLowerCase();
+        c.classList.toggle("is-live", !!n && (s.indexOf(n) > -1 || n.indexOf(s) > -1));
+      });
+    };
+    paintRail(); setInterval(paintRail, 30000);
+  }
+
+
+  /* ---------------- On-Demand: filter the archive shelf ------------------ */
+  var odGrid = $("[data-od-grid]");
+  if (odGrid) {
+    var odEmpty = $("[data-od-empty]");
+    $$("[data-od-filter]").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        var want = chip.dataset.odFilter;
+        $$("[data-od-filter]").forEach(function (c) { c.classList.toggle("is-on", c === chip); });
+        var shown = 0;
+        $$(".od-card", odGrid).forEach(function (card) {
+          var ok = want === "all" || card.dataset.odType === want;
+          card.hidden = !ok;
+          if (ok) shown++;
+        });
+        if (odEmpty) odEmpty.hidden = shown > 0;
+      });
+    });
   }
 
   /* --------------------------------------------------- footer year + boot */
