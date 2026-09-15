@@ -177,6 +177,9 @@
       } catch (e) {}
     }
 
+    // the art slots fall back to this show's portrait, so they move with it
+    paintArt(document, curSong || null);
+
     // schedule grid live highlight + progress
     $$(".sched-row").forEach(function (row) { row.classList.remove("live"); var b = $(".s-progress", row); if (b) b.style.width = "0"; });
     if (cur) {
@@ -333,21 +336,44 @@
     });
   }
 
-  /* Paint one art slot: real cover when we have it, vinyl when we don't. */
+  /* The vendor leaves <cover> empty on roughly a third of tracks — measured
+     against WLML_history.xml, 9 of 30 — so a cover-or-vinyl rule drops to a
+     drawn record far too often. Fall back to the portrait of whoever is on
+     air first: it is always available, always true, and keeps a face on the
+     card instead of a placeholder. */
+  function onAirArt() {
+    var ART = window.LEGENDS_SHOWART || {};
+    var cur = currentSlot();
+    var a = cur && ART[cur.slot.show];
+    return (a && a.photo) ? a : null;
+  }
+
+  /* Paint one art slot: real cover, else the on-air portrait, else vinyl. */
   function paintArt(scope, song) {
+    var onair = onAirArt();
+    var cover = (song && song.cover) ? song.cover : "";
+    var src = cover || (onair ? onair.photo : "");
     $$("[data-art]", scope || document).forEach(function (slot) {
       var img = $("[data-art-img]", slot), fb = $("[data-art-fallback]", slot);
       if (!img || !fb) return;
-      if (song && song.cover) {
-        if (img.getAttribute("src") !== song.cover) {
-          img.onerror = function () { img.hidden = true; fb.hidden = false; slot.classList.remove("has-art"); };
-          img.setAttribute("src", song.cover);
+      if (src) {
+        if (img.getAttribute("src") !== src) {
+          img.onerror = function () {
+            img.hidden = true; fb.hidden = false;
+            slot.classList.remove("has-art"); slot.classList.remove("art-show");
+          };
+          img.setAttribute("src", src);
         }
-        img.alt = song.album ? (song.album + " — " + song.artist) : song.artist;
-        img.hidden = false; fb.hidden = true; slot.classList.add("has-art");
+        /* a portrait is decorative here — the show name is already read out
+           beside it; a real sleeve is worth describing. */
+        img.alt = cover ? (song.album ? (song.album + " — " + song.artist) : song.artist) : "";
+        img.style.objectPosition = cover ? "" : ((onair && onair.focus) || "50% 30%");
+        img.hidden = false; fb.hidden = true;
+        slot.classList.add("has-art");
+        if (cover) { slot.classList.remove("art-show"); } else { slot.classList.add("art-show"); }
       } else {
         img.hidden = true; img.removeAttribute("src"); fb.hidden = false;
-        slot.classList.remove("has-art");
+        slot.classList.remove("has-art"); slot.classList.remove("art-show");
       }
     });
   }
@@ -376,6 +402,43 @@
   }
 
   var playedList = $("[data-played]");
+
+  /* The hero used to be a flat red field. It is now built from the sleeves of
+     the records actually in rotation this hour — two slow-drifting rows,
+     blurred behind a scrim so the headline keeps its contrast. If the feed is
+     unreachable or thin on art, nothing renders and the red stands alone. */
+  var heroCovers = $("[data-hero-covers]");
+  function paintHeroCovers(songs) {
+    if (!heroCovers) return;
+    var seen = {}, urls = [], i, c;
+    for (i = 0; i < songs.length && urls.length < 14; i++) {
+      c = songs[i].cover;
+      if (!c || seen[c]) continue;
+      seen[c] = 1; urls.push(c);
+    }
+    if (urls.length < 6) return;                 // too sparse to read as a wall
+    var key = urls.join("|");
+    if (heroCovers.getAttribute("data-filled") === key) return;
+    heroCovers.setAttribute("data-filled", key);
+    heroCovers.innerHTML = "";
+    for (var r = 0; r < 3; r++) {
+      var row = document.createElement("div");
+      row.className = "hc-row hc-row-" + r;
+      // each row starts at a different point in the list so the grid never
+      // lines up into obvious columns
+      var set = urls.slice(r * 3).concat(urls.slice(0, r * 3));
+      if (r === 1) set = set.slice().reverse();
+      for (var pass = 0; pass < 2; pass++) {     // duplicated so the loop seam never shows
+        for (var k = 0; k < set.length; k++) {
+          var im = document.createElement("img");
+          im.src = set[k]; im.alt = ""; im.loading = "lazy"; im.decoding = "async";
+          row.appendChild(im);
+        }
+      }
+      heroCovers.appendChild(row);
+    }
+    heroCovers.classList.add("ready");
+  }
   function renderPlayed(songs) {
     if (!playedList) return;
     var limit = parseInt(playedList.dataset.playedLimit || "12", 10);
@@ -401,10 +464,11 @@
       return getXML(HIST_URL).then(function (h) { paintTrack(parseSongs(h)[0] || null); return null; });
     }).catch(function () { /* leave the show card as-is; never surface a stack trace */ });
 
-    if (playedList) {
+    if (playedList || heroCovers) {
       getXML(HIST_URL).then(function (h) {
         var songs = parseSongs(h);
         renderPlayed(songs);
+        paintHeroCovers(songs);
         if (!curSong && songs[0]) paintTrack(songs[0]);
       }).catch(function () {
         var e = $("[data-played-empty]");

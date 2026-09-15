@@ -502,3 +502,65 @@ Was a flat list of three show blocks that didn't explain itself. Now:
 - axe 0 violations · 0 JS errors · 0 horizontal overflow — 25 pages × desktop + mobile
 - Links, assets, alt text, `<h1>`, titles, JSON-LD: clean
 - Filters, live rail, album art and episode playback all exercised in-browser
+
+---
+
+## Photographs, on-air artwork and the hero (Sept 2026)
+
+### Real photographs replace the drawn vinyl
+Two panels were holding a decorative record where a picture belonged — the
+homepage *"The Legends Sound"* split and the About page's *"A station built to
+remember"*. Both now carry the station's own event photography via a new
+`photo_frame()` helper: WebP with a JPEG fallback, an explicit focal point
+(these are press-night frames, not studio plates — a centre crop takes heads
+off), the deco frame's inner brass rule, and a caption.
+
+| Asset | Source | Used on |
+|---|---|---|
+| `assets/img/legends-live.*` | station Flickr, `41348361790` | `index.html` |
+| `assets/img/legends-room.*` | station Flickr, `41348373850` | `about.html` |
+
+Both are the station's own photographs, self-hosted rather than hot-linked so
+the pages don't depend on Flickr staying up. **Same caveat as the photo strip:
+every frame on that Flickr is from 2018-06-29.** They read as timeless event
+photography, but if the station has anything newer — especially studio
+photography — these are the first two slots to upgrade.
+
+### Why the On Air card kept showing a blank record
+Not a bug in the page. The vendor feed simply leaves `<cover>` empty on a large
+minority of tracks — **9 of 30** in a sample of `WLML_history.xml`, Michael
+Bublé's *When You're Smiling* among them. The old rule was cover-or-vinyl, so
+roughly a third of the time it fell to the drawn record.
+
+`paintArt()` now runs a three-step chain: **album cover → the portrait of
+whoever is on air → vinyl**. The portrait comes from `LEGENDS_SHOWART`, which
+the schedule already publishes, so no extra request. `paintNowPlaying()`
+repaints the art slots as well, so the fallback follows the schedule across
+show boundaries. The vinyl is now a genuine last resort — overnight, or if the
+feed is unreachable.
+
+### The hero is built from the records in rotation
+It was a flat red radial. It now carries three slow-drifting rows of the
+sleeves actually played this hour, pulled from the station's own play history,
+under a scrim weighted to the left where the headline sits.
+
+- Source is the existing history feed — no new dependency, no new licensing
+  question. The same CDN that serves the On Air card's artwork.
+- `paintHeroCovers()` **only renders with six or more distinct covers**. Below
+  that it returns and the red stands alone exactly as before, so a thin or
+  unreachable feed degrades to the old design rather than a broken grid.
+- Rows are duplicated so the drift loop has no visible seam, and offset from
+  each other so the sleeves never line up into columns.
+- Motion is off under `prefers-reduced-motion`.
+
+**Measured, not eyeballed:** with the wall painted, the lightest pixel behind
+the hero copy is `rgb(47,36,30)` on desktop and `rgb(43,34,23)` on phone —
+**15.1:1** and **15.6:1** against the white headline, **8.2:1** and **8.5:1**
+against the muted sub-copy. AA needs 4.5:1.
+
+### Verified
+- 25 pages × desktop + phone — **axe 0 violations · 0 JS errors · 0 horizontal
+  overflow**
+- Both art paths exercised against real captured payloads: a track with a cover
+  (Emma Smith, *Bitter Orange*) and one without (Bublé, *When You're Smiling*)
+  — the second correctly falls through to Jill & Rich's portrait

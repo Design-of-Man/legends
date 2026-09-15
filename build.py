@@ -839,6 +839,23 @@ def emblem_big():
         '<div class="sheen"></div></div>'
     )
 
+
+def photo_frame(base, alt, caption="", focus="50% 40%"):
+    """A real photograph wearing the deco frame's clothes. `base` is the path
+    without extension; we ship WebP with a JPEG fallback so older Safari still
+    gets a picture. The focal point is explicit because these are event
+    photographs, not studio plates — a plain centre crop cuts heads off."""
+    w, j = base + ".webp", base + ".jpg"
+    img = ('<picture>'
+           '<source srcset="' + w + '?v=' + asset_v(w) + '" type="image/webp">'
+           '<img src="' + j + '?v=' + asset_v(j) + '" alt="' + alt + '" '
+           'width="1024" height="683" loading="lazy" decoding="async" '
+           'style="object-position:' + focus + '">'
+           '</picture>')
+    cap = ('<figcaption>' + caption + '</figcaption>') if caption else ''
+    return ('<figure class="photo-frame">' + img +
+            '<span class="pf-grain" aria-hidden="true"></span>' + cap + '</figure>')
+
 EQ7 = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>'
 
 EVENTS = [
@@ -1043,6 +1060,8 @@ def home_page():
     hero = (
         '<section class="hero">'
         + deco_bar() +
+        '<div class="hero-covers" data-hero-covers aria-hidden="true"></div>'
+        '<div class="hero-scrim" aria-hidden="true"></div>'
         '<div class="hero-beam b1" aria-hidden="true"></div><div class="hero-beam b2" aria-hidden="true"></div>'
         '<div class="hero-vignette" aria-hidden="true"></div>'
         '<div class="container"><div class="hero-inner">'
@@ -1078,7 +1097,11 @@ def home_page():
     )
     intro = (
         '<section class="section surface"><div class="container"><div class="split">'
-        '<div class="split-media reveal"><div class="deco-frame">' + emblem_big() + '</div></div>'
+        '<div class="split-media reveal">' + photo_frame(
+            "assets/img/legends-live",
+            "Two dancers mid-step on a stage beside a Legends Radio 100.3 FM &ldquo;Broadcasting Live&rdquo; banner, watched by a seated audience.",
+            "Broadcasting live &middot; Palm Beach County",
+            "54% 40%") + '</div>'
         '<div class="reveal reveal-d1">' + eyebrow("The Legends Sound") +
         '<h2 style="margin:.7rem 0 1rem">The greatest music ever made — '
         '<span class="serif-italic text-gold">all day, every day.</span></h2>'
@@ -1389,7 +1412,11 @@ def about_page():
                      "the greatest music ever recorded — and give it a proud home in the Palm Beaches.", "about.html")
     story = (
         '<section class="section"><div class="container"><div class="split reverse">'
-        '<div class="split-media reveal"><div class="deco-frame">' + emblem_big() + '</div></div>'
+        '<div class="split-media reveal">' + photo_frame(
+            "assets/img/legends-room",
+            "A singer performing on stage to a seated audience at a Legends Radio event in the Palm Beaches.",
+            "The room, leaning in",
+            "62% 45%") + '</div>'
         '<div class="reveal reveal-d1">' + eyebrow("Since 2014") +
         '<h2 style="margin:.7rem 0 1rem">A station built to remember.</h2>'
         '<p class="lede">Legends Radio was founded by <strong>Dick Robinson</strong> — a broadcasting legend whose '

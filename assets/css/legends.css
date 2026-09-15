@@ -1772,3 +1772,83 @@ strong{color:var(--champagne);}
   .od-card{grid-template-columns:60px 1fr auto;}
   .od-art{width:60px;height:60px;}
 }
+
+/* ==========================================================================
+   PHOTO FRAME — a real photograph in the deco frame's clothes
+   The station's own event photography. These are press-night snaps, not
+   studio plates, so they get a warm wash and a hard frame to sit them in
+   the palette rather than look pasted on.
+   ========================================================================== */
+.photo-frame{
+  position:relative;margin:0;aspect-ratio:4/3;overflow:hidden;
+  border-radius:var(--radius-lg);border:1px solid var(--line);
+  background:var(--ink-2);box-shadow:0 34px 70px -34px rgba(36,26,20,.55);
+  isolation:isolate;
+}
+.photo-frame picture{display:block;width:100%;height:100%;}
+.photo-frame img{width:100%;height:100%;object-fit:cover;display:block;
+  filter:saturate(.94) contrast(1.04);transition:transform 1.1s var(--ease);}
+.photo-frame:hover img{transform:scale(1.03);}
+/* inner brass rule, matching .deco-frame */
+.photo-frame::before{content:"";position:absolute;inset:14px;z-index:3;pointer-events:none;
+  border:1px solid rgba(247,242,230,.42);border-radius:calc(var(--radius-lg) - 8px);}
+/* warm duotone wash — marries 2018 daylight to the lacquer palette */
+.pf-grain{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    linear-gradient(205deg,rgba(231,197,114,.20),transparent 46%),
+    linear-gradient(20deg,rgba(142,31,42,.26),transparent 58%);
+  mix-blend-mode:soft-light;}
+.photo-frame figcaption{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;
+  padding:3rem 1.5rem 1.15rem;color:#F7F2E6;
+  font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;
+  background:linear-gradient(180deg,transparent,rgba(11,8,7,.55) 45%,rgba(11,8,7,.88));
+}
+@media (prefers-reduced-motion:reduce){
+  .photo-frame img,.photo-frame:hover img{transition:none;transform:none;}
+}
+
+/* ==========================================================================
+   HERO BACKDROP — the records actually in rotation
+   Two slow-drifting rows of sleeves pulled from the station's own play
+   history, masked and dimmed behind a scrim. Painted by paintHeroCovers();
+   if the feed is down or short of art, nothing renders and the red stands
+   alone exactly as before.
+   ========================================================================== */
+.hero-covers{
+  position:absolute;inset:-6% -8%;z-index:-4;pointer-events:none;
+  display:flex;flex-direction:column;justify-content:center;gap:1.1vmax;
+  opacity:0;transition:opacity 1.4s var(--ease);
+  /* barely any blur: the point is that these read as records, not as texture */
+  filter:blur(.4px) saturate(1.12) contrast(.95);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 78%,transparent 100%);
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 16%,#000 78%,transparent 100%);
+}
+.hero-covers.ready{opacity:.34;}
+.hc-row{display:flex;gap:1.1vmax;flex:0 0 auto;width:max-content;
+  height:clamp(88px,10.5vmax,150px);
+  animation:hcDrift 150s linear infinite;}
+.hc-row-1{animation-duration:190s;animation-direction:reverse;margin-left:-7vmax;}
+.hc-row-2{animation-duration:230s;margin-left:-3vmax;}
+.hc-row img{height:100%;width:auto;aspect-ratio:1/1;object-fit:cover;
+  border-radius:4px;box-shadow:0 10px 26px rgba(0,0,0,.5);}
+@keyframes hcDrift{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+/* scrim: keeps the headline at AA over whatever colours the sleeves bring.
+   Heavier on the left, where the h1 and body copy sit. */
+.hero-scrim{position:absolute;inset:0;z-index:-4;pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(11,8,7,.93) 0%,rgba(11,8,7,.80) 42%,rgba(11,8,7,.66) 100%),
+    radial-gradient(85% 65% at 74% 22%,rgba(142,31,42,.40) 0%,transparent 62%),
+    linear-gradient(180deg,rgba(11,8,7,.6) 0%,transparent 22%,transparent 58%,rgba(11,8,7,.86) 100%);
+}
+@media (max-width:860px){
+  /* on a phone the copy spans the full width, so the wall has to sit further back */
+  .hero-covers.ready{opacity:.42;}
+  .hero-scrim{background:linear-gradient(180deg,rgba(11,8,7,.9),rgba(11,8,7,.8) 50%,rgba(11,8,7,.92));}
+}
+@media (prefers-reduced-motion:reduce){
+  .hc-row{animation:none;}
+}
+
+/* on-air portrait standing in for a missing sleeve — same slot, softer edge */
+.art.art-show .art-img{border-color:rgba(231,197,114,.34);}
