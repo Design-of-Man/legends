@@ -305,15 +305,15 @@ def deco_bar():
 # ---------------------------------------------------------------------------
 # SHARED COMPONENTS
 # ---------------------------------------------------------------------------
-def brand():
+def brand(cls=""):
+    """The station's real logo (from legendsradio.com), reversed for the dark theme."""
     return (
-        '<a class="brand" href="index.html" aria-label="Legends Radio 100.3 FM home">'
-        '<img class="logo" src="assets/img/legends-emblem.svg" alt="" width="46" height="46" loading="eager">'
-        '<span class="brand-txt">'
-        '<span class="brand-word"><span class="brand-script">Legends</span><span class="brand-radio">radio</span></span>'
-        '<small>100.3 FM · Palm Beach County</small></span>'
+        '<a class="brand%s" href="index.html" aria-label="Legends Radio 100.3 FM home">'
+        '<img class="logo" src="assets/img/legends-logo.webp" '
+        'alt="Legends Radio — The One and Only… Heard at 100.3 in Palm Beach County. A Dick Robinson Entertainment Station" '
+        'width="500" height="160" loading="eager" decoding="async">'
         '</a>'
-    )
+    ) % ((" " + cls) if cls else "")
 
 def header(active):
     items = ""
@@ -395,7 +395,7 @@ def footer():
            html.escape("%s, %s, %s %s" % (s["addr_street"], s["addr_city"], s["addr_region"], s["addr_zip"]))
     return (
         '<footer class="site-footer"><div class="container"><div class="footer-grid">'
-        '<div class="footer-brand">' + brand() +
+        '<div class="footer-brand">' + brand("brand-footer") +
         '<p>' + s["short"] + ' 100.3 FM is a full-power, live &amp; local station in Florida\'s Palm Beaches, '
         'devoted to preserving and celebrating the Great American Songbook.</p>'
         '<p style="color:var(--gold);font-weight:600;font-size:.82rem;letter-spacing:.03em;margin-top:.9rem">'
@@ -683,34 +683,38 @@ def np_card():
 # PAGES
 # ===========================================================================
 def ad_stage():
-    """Homepage top-of-page ad banner: rotating promo slider + partner display ads."""
+    """Homepage top-of-page ad banner: rotating 700x400 promo slider + 300x250 partner ads.
+    Creative is shown at (or below) its native size and never cropped."""
     ext = ' target="_blank" rel="sponsored noopener"'
+    n = len(AD_SLIDES)
     slides = ""
     for i, a in enumerate(AD_SLIDES):
         load = ' loading="eager" fetchpriority="high"' if i == 0 else ' loading="lazy"'
         slides += ('<a class="ad-slide%s" href="%s"%s role="group" aria-roledescription="slide" '
                    'aria-label="%d of %d"%s><img src="%s" alt="%s" width="700" height="400" decoding="async"%s></a>') % (
-            " is-active" if i == 0 else "", a["href"], ext, i + 1, len(AD_SLIDES),
+            " is-active" if i == 0 else "", a["href"], ext, i + 1, n,
             "" if i == 0 else ' aria-hidden="true" tabindex="-1"', a["img"], html.escape(a["alt"]), load)
-    dots = "".join('<button type="button" class="ad-dot%s" aria-label="Show banner %d"%s></button>'
-                   % (" is-active" if i == 0 else "", i + 1, ' aria-current="true"' if i == 0 else "")
-                   for i in range(len(AD_SLIDES)))
+    dots = "".join('<button type="button" class="ad-dot%s" aria-label="Show banner %d of %d"%s></button>'
+                   % (" is-active" if i == 0 else "", i + 1, n, ' aria-current="true"' if i == 0 else "")
+                   for i in range(n))
     partners = "".join(('<a class="ad-partner" href="%s"%s><img src="%s" alt="%s" width="300" height="250" '
                         'loading="eager" decoding="async"></a>') % (a["href"], ext, a["img"], html.escape(a["alt"]))
                        for a in AD_PARTNERS)
     return (
-        '<section class="ad-stage" aria-label="Featured sponsors and events" data-ad-slider><div class="container-wide">'
+        '<section class="ad-stage" aria-label="Featured events and sponsors" data-ad-slider>'
+        '<div class="ad-inner">'
         '<div class="ad-bar"><span class="ad-label">Featured &amp; Sponsors</span>'
-        '<div class="ad-dots">' + dots + '</div>'
-        '<a class="ad-sell" href="advertise.html">Advertise on Legends ' + IC["arrow"] + '</a></div>'
+        '<a class="ad-sell" href="advertise.html">Advertise with Legends ' + IC["arrow"] + '</a></div>'
         '<div class="ad-grid">'
-        '<div class="ad-slider" aria-roledescription="carousel" aria-label="Featured banners">'
-        '<div class="ad-track">' + slides + '</div>'
+        '<div class="ad-slider" aria-roledescription="carousel" aria-label="Featured banners">' + slides + '</div>'
+        '<div class="ad-partners" aria-label="Our partners">' + partners + '</div>'
+        '</div>'
+        '<div class="ad-controls">'
         '<button type="button" class="ad-nav ad-prev" aria-label="Previous banner">' + IC["chevron"] + '</button>'
+        '<div class="ad-dots">' + dots + '</div>'
         '<button type="button" class="ad-nav ad-next" aria-label="Next banner">' + IC["chevron"] + '</button>'
         '</div>'
-        '<div class="ad-partners" aria-label="Our partners">' + partners + '</div>'
-        '</div></div></section>'
+        '</div></section>'
     )
 
 def home_page():
@@ -721,8 +725,6 @@ def home_page():
         '<div class="hero-vignette" aria-hidden="true"></div>'
         '<div class="container"><div class="hero-inner">'
         '<div class="hero-copy reveal">'
-        '<p class="script-line" style="font-size:clamp(1.9rem,4vw,3rem);margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem">'
-        'The One and Only…<img class="deco-flag" src="assets/img/legends-flag.svg" alt="" width="46" height="29"></p>'
         '<div class="hero-badge"><span class="freq">100.3 FM</span><span class="sep"></span>'
         '<small>Live &amp; Local · Palm Beach County</small></div>'
         '<h1>Where <span class="accent foil">Legendary</span><br>Music Lives</h1>'
