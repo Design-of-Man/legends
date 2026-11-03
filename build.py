@@ -758,7 +758,11 @@ def home_page():
     )
     intro = (
         '<section class="section surface"><div class="container"><div class="split">'
-        '<div class="split-media reveal"><div class="deco-frame">' + emblem_big() + '</div></div>'
+        '<figure class="split-media reveal photo-frame">'
+        '<img src="assets/img/legends/sinatra-studio.jpg" alt="Frank Sinatra singing at a studio microphone, around 1947" '
+        'width="720" height="900" loading="lazy" decoding="async">'
+        '<figcaption>Frank Sinatra in the studio, c. 1947 · Photo: William P. Gottlieb / Library of Congress</figcaption>'
+        '</figure>'
         '<div class="reveal reveal-d1">' + eyebrow("The Legends Sound") +
         '<h2 style="margin:.7rem 0 1rem">The greatest music ever made — '
         '<span class="serif-italic text-gold">all day, every day.</span></h2>'
