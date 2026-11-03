@@ -219,6 +219,18 @@ SIGNATURE = [
      "blurb": "A midday set of the greatest recordings ever made — the perfect soundtrack to your lunch hour."},
 ]
 
+# Legends of the Songbook shown in the homepage hero. All are William P. Gottlieb
+# portraits from the Library of Congress (public domain, no restrictions) via
+# Wikimedia Commons, converted to matched black & white in assets/img/legends/.
+LEGEND_FACES = [
+    {"name": "Frank Sinatra", "img": "assets/img/legends/frank-sinatra.jpg"},
+    {"name": "Ella Fitzgerald", "img": "assets/img/legends/ella-fitzgerald.jpg"},
+    {"name": "Nat King Cole", "img": "assets/img/legends/nat-king-cole.jpg"},
+    {"name": "Billie Holiday", "img": "assets/img/legends/billie-holiday.jpg"},
+    {"name": "Louis Armstrong", "img": "assets/img/legends/louis-armstrong.jpg"},
+    {"name": "Sarah Vaughan", "img": "assets/img/legends/sarah-vaughan.jpg"},
+]
+
 # ---------------------------------------------------------------------------
 # ADVERTISING — the homepage "sponsor stage" (first thing a visitor sees).
 # Mirrors legendsradio.com: a rotating 700x400 promo slider + "Our Partners"
@@ -703,12 +715,16 @@ def ad_stage():
 
 def home_page():
     s = STATION
+    faces = "".join(
+        '<figure class="face"><img src="%s" alt="%s" width="400" height="500" loading="%s" decoding="async">'
+        '<figcaption>%s</figcaption></figure>' % (f["img"], html.escape(f["name"]), "eager" if i < 3 else "lazy", html.escape(f["name"]))
+        for i, f in enumerate(LEGEND_FACES))
     hero = (
-        '<section class="hero2" aria-labelledby="hero-title"><div class="container hero2-grid">'
-        '<div class="hero2-copy">'
+        '<section class="hero3" aria-labelledby="hero-title"><div class="container hero3-grid">'
+        '<div class="hero3-copy">'
         '<p class="hero2-kicker">100.3 FM · WLML · Palm Beach County</p>'
         '<h1 class="hero2-title" id="hero-title">Where legendary music lives.</h1>'
-        '<p class="hero2-sub">Sinatra, Ella, Tony Bennett, Bublé and the rest of the Great American '
+        '<p class="hero2-sub">Sinatra, Ella, Nat King Cole, Billie Holiday and the rest of the Great American '
         'Songbook, live and local from the Palm Beaches, around the clock.</p>'
         '<div class="hero2-actions">'
         '<button type="button" class="hero2-play" data-play data-play-label-text="Listen live" aria-pressed="false">'
@@ -717,23 +733,21 @@ def home_page():
         '</button>'
         '<a class="hero2-link" href="shows.html">See the weekly schedule</a>'
         '</div>'
-        '<p class="hero2-also">Also on the Legends app for '
-        '<a href="' + s["app_ios"] + '" target="_blank" rel="noopener">iPhone</a> and '
-        '<a href="' + s["app_android"] + '" target="_blank" rel="noopener">Android</a>, '
-        '<a href="' + s["tunein"] + '" target="_blank" rel="noopener">TuneIn</a>, and smart speakers.</p>'
-        '</div>'
-        '<aside class="onair" aria-label="On air now">'
+        '<div class="onair onair-compact" aria-label="On air now">'
         '<div class="onair-photo"><img id="np-photo" alt="" width="300" height="375" decoding="async">'
         '<span class="onair-fallback" aria-hidden="true">100.3</span></div>'
         '<div class="onair-body">'
         '<p class="onair-label"><span class="dot-live"></span> On air now</p>'
-        '<h2 class="onair-show" id="np-show">Nonstop Legends</h2>'
-        '<p class="onair-host" id="np-host">The Great American Songbook</p>'
-        '<p class="onair-time" id="np-time"></p>'
+        '<p class="onair-show" id="np-show">Nonstop Legends</p>'
+        '<p class="onair-host"><span id="np-host">The Great American Songbook</span> · <span id="np-time"></span></p>'
         '<div class="onair-progress" aria-hidden="true"><span id="np-progress"></span></div>'
         '<p class="onair-next" id="np-next"></p>'
-        '</div></aside>'
-        '</div></section>'
+        '</div></div>'
+        '</div>'
+        '<div class="faces" aria-label="Legends you hear on 100.3">' + faces + '</div>'
+        '</div>'
+        '<p class="container faces-credit">Portraits: William P. Gottlieb Collection, Library of Congress.</p>'
+        '</section>'
     )
     stats = (
         '<section class="section-tight"><div class="container-wide"><div class="stats">'
