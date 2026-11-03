@@ -608,14 +608,25 @@ def emblem_big():
 EQ7 = '<span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>'
 
 EVENTS = [
-    {"title": "Live Concerts at Abacoa", "tag": "Free Concert Series", "icon": "ticket",
-     "blurb": "Legends Radio &amp; Robinson Entertainment present a free tribute-concert series at the Downtown Abacoa Amphitheater in Jupiter — showtime 7:30 PM, all ages, with optional Preferred Reserved Seating."},
-    {"title": "American Songbook Tributes", "tag": "On Stage", "icon": "note",
-     "blurb": "From PHD (Petty · Hall &amp; Oates · Steely Dan) to a Chicago tribute and ’60s–’70s celebrations, the concert lineup rotates all season long across the Palm Beaches."},
-    {"title": "Supper Club with Jill &amp; Rich", "tag": "Live Cabaret", "icon": "mic",
-     "blurb": "An intimate evening of the Great American Songbook performed live by morning hosts Jill &amp; Rich Switzer — the classics the way they were meant to be heard."},
-    {"title": "SPGAS Benefactors Gala", "tag": "Black Tie · Give Back", "icon": "heart",
-     "blurb": "The Society for the Preservation of the Great American Songbook's signature gala — honoring legends like Marilyn Maye, from Club Colette to the Kravis Center."},
+    {"title": "Earl Stewart Live Concert Series at Abacoa", "kicker": "Free concerts · Downtown Abacoa Amphitheater, Jupiter",
+     "img": "assets/hosts/abacoa-cover.webp", "w": 800, "h": 292,
+     "blurb": "Tribute concerts produced by Dick Robinson Entertainment, one Saturday a month at 7:30 PM. "
+              "This season: Tom Petty, Elton John, Chicago, ELO, Journey, Neil Diamond, the Rolling Stones, the Eagles and more. "
+              "Free and all ages, with optional Preferred Reserved Seating.",
+     "cta": "See the lineup and reserve seats", "url": "https://www.eventbrite.com/o/8860760162"},
+    {"title": "2026 Benefactors Gala, honoring Kenny G", "kicker": "Thu, Dec 10, 2026 · Glazer Hall, Palm Beach",
+     "img": "assets/img/ads/gas-benefactors-gala.webp", "w": 700, "h": 400,
+     "blurb": "The Society for the Preservation of the Great American Songbook's black-tie evening, with young artists "
+              "and a Lifetime Achievement Award for Kenny G. Cocktails 5:15, dinner 6:00, concert 7:30.",
+     "cta": "Gala details and tickets", "url": "https://preserveourgas.org/gala"},
+    {"title": "The Long Run: a tribute to the Eagles", "kicker": "Live Concert Series at Abacoa",
+     "img": "assets/img/ads/eagles-tribute.webp", "w": 700, "h": 400,
+     "blurb": "The Eagles' greatest hits performed live under the stars at the Downtown Abacoa Amphitheater.",
+     "cta": "Get tickets", "url": "https://www.eventbrite.com/e/the-long-run-a-tribute-to-the-eagles-tickets-1988369104517"},
+    {"title": "Supper Club with Jill &amp; Rich", "kicker": "Live cabaret",
+     "img": "assets/hosts/jill-rich.jpg", "w": 300, "h": 200,
+     "blurb": "An intimate evening of the Great American Songbook performed live by morning hosts Jill &amp; Rich Switzer.",
+     "cta": "Upcoming dates", "url": "https://www.eventbrite.com/o/8860760162"},
 ]
 
 ON_DEMAND = [
@@ -668,27 +679,18 @@ SHOW_ART = {
     "Cindy on Legends": "cindy-hite",
 }
 
-# per-photo framing where the default (face slightly above centre) needs a nudge
-SHOW_ART_POS = {"jill-rich-switzer": "50% 15%", "alex-donner": "50% 62%"}
-
 def show_art(sig):
     key = SHOW_ART.get(sig["name"], "")
-    if key.startswith("logo:"):
-        return ('<div class="show-art show-art-logo"><img src="%s" alt="%s logo" width="300" height="150" loading="lazy" decoding="async"></div>'
-                % (key[5:], html.escape(sig["name"])))
-    src = headshot(key) if key else ""
+    slug = "dick-robinson" if key.startswith("logo:") else key
+    src = headshot(slug) if slug else ""
     if src:
-        pos = SHOW_ART_POS.get(key)
-        style = ' style="object-position:%s"' % pos if pos else ""
-        return ('<div class="show-art"><img src="%s" alt="%s, host of %s" width="400" height="400" loading="lazy" decoding="async"%s></div>'
-                % (src, html.escape(sig["host"]), html.escape(sig["name"]), style))
-    return ('<div class="show-art show-art-brand"><img src="assets/img/legends-logo.webp" alt="" width="500" height="160" '
-            'loading="lazy" decoding="async"></div>')
+        return '<img class="show-avatar" src="%s" alt="" width="56" height="56" loading="lazy" decoding="async">' % src
+    return '<span class="show-avatar show-avatar-brand" aria-hidden="true"><img src="assets/img/favicon.png" alt="" width="56" height="56"></span>'
 
 def show_card(sig, idx=0):
     return (
-        '<article class="card show-card reveal reveal-d%d">%s'
-        '<span class="pill">%s</span>'
+        '<article class="card show-card reveal reveal-d%d"><div class="show-head">%s'
+        '<span class="pill">%s</span></div>'
         '<h3 style="margin:.9rem 0 .3rem">%s</h3>'
         '<p style="color:var(--gold);font-weight:600;font-size:.92rem;margin-bottom:.6rem">%s</p>'
         '<p style="color:var(--muted);font-size:.95rem">%s</p>'
@@ -696,18 +698,25 @@ def show_card(sig, idx=0):
     ) % (idx % 4, show_art(sig), html.escape(sig["slot"]), html.escape(sig["name"]),
          html.escape(sig["host"]), sig["blurb"])
 
-def event_card(ev, idx=0):
+def event_feature(ev):
     return (
-        '<article class="card reveal reveal-d%d" style="display:flex;flex-direction:column">'
-        '<div style="width:56px;height:56px;display:grid;place-items:center;border-radius:15px;margin-bottom:1.2rem;'
-        'background:linear-gradient(160deg,rgba(178,61,75,.28),rgba(138,44,56,.12));'
-        'border:1px solid rgba(178,61,75,.42);color:var(--gold-bright)">%s</div>'
-        '<span class="pill" style="align-self:flex-start">%s</span>'
-        '<h3 style="margin:.8rem 0 .45rem">%s</h3>'
-        '<p style="color:var(--muted);font-size:.95rem;flex:1">%s</p>'
-        '<div class="mt-3"><a class="link-arrow" href="%s" target="_blank" rel="noopener">Dates &amp; tickets on Eventbrite %s</a></div>'
+        '<article class="ev-feature reveal">'
+        '<a class="ev-feature-img" href="%s" target="_blank" rel="noopener">'
+        '<img src="%s" alt="" width="%d" height="%d" loading="lazy" decoding="async"></a>'
+        '<div class="ev-feature-body"><p class="ev-kicker">%s</p><h3>%s</h3><p class="ev-blurb">%s</p>'
+        '<a class="link-arrow" href="%s" target="_blank" rel="noopener">%s %s</a></div>'
         '</article>'
-    ) % (idx % 4, IC[ev["icon"]], ev["tag"], ev["title"], ev["blurb"], STATION["eventbrite"], IC["arrow"])
+    ) % (ev["url"], ev["img"], ev["w"], ev["h"], ev["kicker"], ev["title"], ev["blurb"], ev["url"], ev["cta"], IC["arrow"])
+
+def event_row(ev):
+    return (
+        '<article class="ev-row reveal">'
+        '<a class="ev-thumb" href="%s" target="_blank" rel="noopener">'
+        '<img src="%s" alt="" width="%d" height="%d" loading="lazy" decoding="async"></a>'
+        '<div><p class="ev-kicker">%s</p><h3>%s</h3><p class="ev-blurb">%s</p>'
+        '<a class="link-arrow" href="%s" target="_blank" rel="noopener">%s %s</a></div>'
+        '</article>'
+    ) % (ev["url"], ev["img"], ev["w"], ev["h"], ev["kicker"], ev["title"], ev["blurb"], ev["url"], ev["cta"], IC["arrow"])
 
 def ad_partners_html(load="eager"):
     return "".join(('<a class="ad-partner" href="%s" target="_blank" rel="sponsored noopener"><img src="%s" alt="%s" '
@@ -808,23 +817,15 @@ def home_page():
         '<div class="mt-3"><a class="link-arrow" href="about.html">Our story ' + IC["arrow"] + '</a></div>'
         '</div></div></div></section>'
     )
-    shows = (
-        '<section class="section"><div class="container">'
-        '<div class="section-head center"><span class="eyebrow centered">On the Air</span>'
-        '<h2>Signature shows, real hosts</h2>'
-        '<p class="lede mx-auto">Live and local, morning to midnight — company for every hour of your day.</p></div>'
-        '<div class="grid grid-3">'
-        + show_card(SIGNATURE[0], 0) + show_card(SIGNATURE[1], 1) + show_card(SIGNATURE[3], 2) +
-        '</div><div class="center mt-4"><a class="btn btn-ghost" href="shows.html">See the full weekly schedule ' + IC["arrow"] + '</a></div>'
-        '</div></section>'
-    )
     hosts = (
         '<section class="section surface-deep"><div class="container">'
-        '<div class="section-head center"><span class="eyebrow centered">Your Hosts</span>'
-        '<h2>The voices of the Palm Beaches</h2></div>'
+        '<div class="section-head center"><span class="eyebrow centered">On the Air</span>'
+        '<h2>Real hosts, live and local</h2>'
+        '<p class="lede mx-auto">Company for every hour of your day, morning to midnight.</p></div>'
         '<div class="grid grid-4">'
         + "".join(host_card(h, i) for i, h in enumerate(HOSTS[:4])) +
-        '</div><div class="center mt-4"><a class="btn btn-ghost" href="hosts.html">Meet the whole on-air team ' + IC["arrow"] + '</a></div>'
+        '</div><div class="center mt-4 btn-row"><a class="btn btn-ghost" href="shows.html">Weekly schedule ' + IC["arrow"] + '</a>'
+        '<a class="btn btn-ghost" href="hosts.html">Meet the whole on-air team ' + IC["arrow"] + '</a></div>'
         '</div></section>'
     )
     events = (
@@ -832,9 +833,9 @@ def home_page():
         '<div class="section-head center"><span class="eyebrow centered">Out on the Town</span>'
         '<h2>Legends, live and in the room</h2>'
         '<p class="lede mx-auto">The music leaves the studio all season long across Palm Beach County.</p></div>'
-        '<div class="grid grid-3">'
-        + "".join(event_card(e, i) for i, e in enumerate(EVENTS[:3])) +
-        '</div><div class="center mt-4"><a class="btn btn-ghost" href="events.html">All events &amp; tickets ' + IC["arrow"] + '</a></div>'
+        + event_feature(EVENTS[0]) +
+        '<div class="ev-list">' + event_row(EVENTS[1]) + event_row(EVENTS[3]) + '</div>'
+        '<div class="center mt-4"><a class="btn btn-ghost" href="events.html">All events &amp; tickets ' + IC["arrow"] + '</a></div>'
         '</div></section>'
     )
     listen = (
@@ -846,7 +847,7 @@ def home_page():
     )
     partners_m = ('<section class="ad-partners-m" aria-label="Our partners"><div class="container">'
                   '<p class="ad-label">Our Partners</p><div class="ad-partners">' + ad_partners_html("lazy") + '</div></div></section>')
-    body = ad_stage() + hero + partners_m + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
+    body = ad_stage() + hero + partners_m + marquee() + stats + intro + hosts + events + listen + newsletter_block() + cta_band(
         "Pour a drink. Turn it up.",
         "The Great American Songbook is playing right now on 100.3 FM — and streaming worldwide.",
         secondary=("shows.html", "Browse Shows"))
@@ -1087,8 +1088,9 @@ def events_page():
                      "All season long, Legends 100.3 brings the Great American Songbook off the dial and into the "
                      "Palm Beaches — supper clubs, live broadcasts, and community nights.", "events.html")
     grid = (
-        '<section class="section"><div class="container"><div class="grid grid-3">'
-        + "".join(event_card(e, i) for i, e in enumerate(EVENTS)) + '</div>'
+        '<section class="section"><div class="container">'
+        + event_feature(EVENTS[0]) +
+        '<div class="ev-list">' + "".join(event_row(e) for e in EVENTS[1:]) + '</div>'
         '<div class="center mt-4"><a class="btn btn-primary btn-lg" href="' + STATION["eventbrite"] + '" target="_blank" rel="noopener">'
         + IC["ticket"] + ' See upcoming dates &amp; get tickets</a>'
         '<p class="form-note mt-2">Free concerts at the <strong>Downtown Abacoa Amphitheater</strong>, Jupiter · '
