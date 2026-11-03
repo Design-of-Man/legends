@@ -143,3 +143,11 @@ was deliberately excluded** (Alaina's Cafe, Harbourside/BurgerFi, Uncle
 Eddie's, Bake Me A Wish etc.) — that artwork belongs to the advertisers, not
 the station. Confirm the station holds rights to each host portrait before
 launch.
+
+## Homepage ad banners
+The first thing on the homepage is the **sponsor stage**: a rotating 700×400 banner slider
+(6 s per slide, pauses on hover/focus, swipeable, no auto-rotate with reduced motion) plus
+two 300×250 "Our Partners" display ads, with an "Advertise on Legends" link. The creative is the
+station's real current banners, copied from legendsradio.com into `assets/img/ads/`.
+To sell or swap a spot, add the image to `assets/img/ads/`, edit `AD_SLIDES` / `AD_PARTNERS`
+in `build.py`, and rebuild.

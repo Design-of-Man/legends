@@ -288,6 +288,44 @@
     drawRail();
   }
 
+  /* ------------------------------------------- homepage ad banner slider */
+  $$("[data-ad-slider]").forEach(function (root) {
+    var slides = $$(".ad-slide", root), dots = $$(".ad-dot", root);
+    if (slides.length < 2) return;
+    var i = 0, timer = null, hold = false, DELAY = 6000;
+    function go(n) {
+      i = (n + slides.length) % slides.length;
+      slides.forEach(function (s, k) {
+        var on = k === i;
+        s.classList.toggle("is-active", on);
+        if (on) { s.removeAttribute("aria-hidden"); s.removeAttribute("tabindex"); }
+        else { s.setAttribute("aria-hidden", "true"); s.setAttribute("tabindex", "-1"); }
+      });
+      dots.forEach(function (d, k) {
+        d.classList.toggle("is-active", k === i);
+        if (k === i) d.setAttribute("aria-current", "true"); else d.removeAttribute("aria-current");
+      });
+    }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    function start() { stop(); if (!RM && !hold && !document.hidden) timer = setInterval(function () { go(i + 1); }, DELAY); }
+    $(".ad-prev", root).addEventListener("click", function () { go(i - 1); start(); });
+    $(".ad-next", root).addEventListener("click", function () { go(i + 1); start(); });
+    dots.forEach(function (d, k) { d.addEventListener("click", function () { go(k); start(); }); });
+    root.addEventListener("mouseenter", function () { hold = true; stop(); });
+    root.addEventListener("mouseleave", function () { hold = false; start(); });
+    root.addEventListener("focusin", function () { hold = true; stop(); });
+    root.addEventListener("focusout", function () { hold = false; start(); });
+    document.addEventListener("visibilitychange", start);
+    var x0 = null; // swipe on touch screens
+    root.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+    root.addEventListener("touchend", function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) { go(dx < 0 ? i + 1 : i - 1); start(); }
+    }, { passive: true });
+    start();
+  });
+
   /* --------------------------------------------------- footer year + boot */
   var y = $("#year"); if (y) y.textContent = new Date().getFullYear();
   reflectUI();
