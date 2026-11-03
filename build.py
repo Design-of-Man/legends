@@ -439,7 +439,7 @@ def org_schema():
         "url": BASE + "/", "slogan": s["slogan"],
         "description": "Legends Radio 100.3 FM (WLML-FM) is a live, local Great American Songbook "
                        "station serving West Palm Beach and the Palm Beaches.",
-        "logo": BASE + "/assets/img/favicon.png",
+        "logo": BASE + "/assets/img/legends-logo-on-light.png",
         "image": BASE + "/assets/img/legends-og.png",
         "telephone": s["phone_e164"], "email": s["email"],
         "foundingDate": s["founded_iso"],
@@ -486,7 +486,7 @@ def document(filename, title, desc, body, active, extra_schema=None, og_image="l
         "window.LEGENDS_STREAM=" + json.dumps(STATION["stream"]) + ";"
         "window.LEGENDS_POPOUT=" + json.dumps(STATION["popout"]) + ";"
         "window.LEGENDS_ARTWORK=" + json.dumps(BASE + "/assets/img/legends-artwork.png") + ";"
-        "window.LEGENDS_HOSTPHOTOS=" + json.dumps({h["slug"]: h["photo"] for h in HOSTS if h.get("photo")}) + ";"
+        "window.LEGENDS_HOSTPHOTOS=" + json.dumps({h["slug"]: (headshot(h["slug"]) or h["photo"]) for h in HOSTS if h.get("photo")}) + ";"
     )
     schema = jsonld(breadcrumb(title.split(" | ")[0], filename) if filename != "index.html" else None,
                     extra_schema)
@@ -512,8 +512,8 @@ def document(filename, title, desc, body, active, extra_schema=None, og_image="l
         "<meta name=\"twitter:description\" content=\"" + html.escape(desc) + "\">"
         "<meta name=\"twitter:image\" content=\"" + og_url + "\">"
         # icons + manifest
-        "<link rel=\"icon\" href=\"assets/img/favicon.svg\" type=\"image/svg+xml\">"
-        "<link rel=\"icon\" href=\"assets/img/favicon.png\" sizes=\"any\">"
+        "<link rel=\"icon\" href=\"assets/img/favicon-32.png\" sizes=\"32x32\" type=\"image/png\">"
+        "<link rel=\"icon\" href=\"assets/img/favicon.png\" sizes=\"512x512\" type=\"image/png\">"
         "<link rel=\"apple-touch-icon\" href=\"assets/img/apple-touch-icon.png\">"
         "<link rel=\"manifest\" href=\"site.webmanifest\">"
         # fonts preload (glamour serif + body sans)
@@ -638,7 +638,7 @@ ON_DEMAND = [
 def host_card(h, idx=0, full=False):
     persons = ""
     img = ('<img src="%s" alt="%s, %s on Legends Radio 100.3 FM" loading="lazy" decoding="async">'
-           % (h["photo"], html.escape(h["name"]), html.escape(h["role"]))) if h.get("photo") else ""
+           % (headshot(h["slug"]) or h["photo"], html.escape(h["name"]), html.escape(h["role"]))) if h.get("photo") else ""
     bio = ('<p class="host-bio">%s</p>' % h["bio"]) if full else ""
     return (
         '<article class="card host-card reveal reveal-d%d">'
@@ -651,15 +651,49 @@ def host_card(h, idx=0, full=False):
     ) % (idx % 4, img, h["mono"], html.escape(h["role"]), html.escape(h["name"]),
          html.escape(h["show"]), html.escape(h["slot"]), bio)
 
+def headshot(slug):
+    """Square, face-centred headshot cut from the host's station photo (assets/hosts/headshots/)."""
+    rel = "assets/hosts/headshots/%s.jpg" % slug
+    return rel if os.path.exists(os.path.join(ROOT, rel)) else ""
+
+# Art for the show cards: the show's own logo where one exists, otherwise the host's headshot.
+SHOW_ART = {
+    "The Morning Lounge": "jill-rich-switzer",
+    "Middays with Mike McGann": "mike-mcgann",
+    "Legends Afternoons with Steve Ketelaar": "steve-ketelaar",
+    "American Standards by the Sea": "logo:assets/hosts/american-standards.jpg",
+    "Legends of Jazz": "popeye-alexander",
+    "Evenings with Alex Donner": "alex-donner",
+    "Legends After Dark": "bob-merrill",
+    "Cindy on Legends": "cindy-hite",
+}
+
+# per-photo framing where the default (face slightly above centre) needs a nudge
+SHOW_ART_POS = {"jill-rich-switzer": "50% 15%", "alex-donner": "50% 62%"}
+
+def show_art(sig):
+    key = SHOW_ART.get(sig["name"], "")
+    if key.startswith("logo:"):
+        return ('<div class="show-art show-art-logo"><img src="%s" alt="%s logo" width="300" height="150" loading="lazy" decoding="async"></div>'
+                % (key[5:], html.escape(sig["name"])))
+    src = headshot(key) if key else ""
+    if src:
+        pos = SHOW_ART_POS.get(key)
+        style = ' style="object-position:%s"' % pos if pos else ""
+        return ('<div class="show-art"><img src="%s" alt="%s, host of %s" width="400" height="400" loading="lazy" decoding="async"%s></div>'
+                % (src, html.escape(sig["host"]), html.escape(sig["name"]), style))
+    return ('<div class="show-art show-art-brand"><img src="assets/img/legends-logo.webp" alt="" width="500" height="160" '
+            'loading="lazy" decoding="async"></div>')
+
 def show_card(sig, idx=0):
     return (
-        '<article class="card reveal reveal-d%d">'
+        '<article class="card show-card reveal reveal-d%d">%s'
         '<span class="pill">%s</span>'
         '<h3 style="margin:.9rem 0 .3rem">%s</h3>'
         '<p style="color:var(--gold);font-weight:600;font-size:.92rem;margin-bottom:.6rem">%s</p>'
         '<p style="color:var(--muted);font-size:.95rem">%s</p>'
         '</article>'
-    ) % (idx % 4, html.escape(sig["slot"]), html.escape(sig["name"]),
+    ) % (idx % 4, show_art(sig), html.escape(sig["slot"]), html.escape(sig["name"]),
          html.escape(sig["host"]), sig["blurb"])
 
 def event_card(ev, idx=0):
@@ -1273,7 +1307,6 @@ def build_manifest():
         "background_color": "#0A0B16", "theme_color": "#0A0B16",
         "icons": [
             {"src": "assets/img/favicon.png", "sizes": "512x512", "type": "image/png"},
-            {"src": "assets/img/favicon.svg", "sizes": "any", "type": "image/svg+xml"},
         ],
     }, indent=2)
 
