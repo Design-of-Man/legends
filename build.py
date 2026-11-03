@@ -715,12 +715,12 @@ def ad_stage():
 
 def home_page():
     s = STATION
-    faces = "".join(
-        '<figure class="face"><img src="%s" alt="%s" width="400" height="500" loading="%s" decoding="async">'
-        '<figcaption>%s</figcaption></figure>' % (f["img"], html.escape(f["name"]), "eager" if i < 3 else "lazy", html.escape(f["name"]))
-        for i, f in enumerate(LEGEND_FACES))
+    faces = "".join('<img src="%s" alt="" width="480" height="600" loading="eager" decoding="async">' % f["img"]
+                    for f in LEGEND_FACES)
     hero = (
-        '<section class="hero3" aria-labelledby="hero-title"><div class="container hero3-grid">'
+        '<section class="hero3" aria-labelledby="hero-title">'
+        '<div class="hero3-bg" aria-hidden="true">' + faces + '</div>'
+        '<div class="container hero3-grid">'
         '<div class="hero3-copy">'
         '<p class="hero2-kicker">100.3 FM · WLML · Palm Beach County</p>'
         '<h1 class="hero2-title" id="hero-title">Where legendary music lives.</h1>'
@@ -744,9 +744,8 @@ def home_page():
         '<p class="onair-next" id="np-next"></p>'
         '</div></div>'
         '</div>'
-        '<div class="faces" aria-label="Legends you hear on 100.3">' + faces + '</div>'
         '</div>'
-        '<p class="container faces-credit">Portraits: William P. Gottlieb Collection, Library of Congress.</p>'
+        '<p class="faces-credit">Photos: William P. Gottlieb Collection, Library of Congress</p>'
         '</section>'
     )
     stats = (
