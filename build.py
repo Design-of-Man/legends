@@ -219,6 +219,18 @@ SIGNATURE = [
      "blurb": "A midday set of the greatest recordings ever made — the perfect soundtrack to your lunch hour."},
 ]
 
+# Legends of the Songbook shown in the homepage hero. All are William P. Gottlieb
+# portraits from the Library of Congress (public domain, no restrictions) via
+# Wikimedia Commons, converted to matched black & white in assets/img/legends/.
+LEGEND_FACES = [
+    {"name": "Frank Sinatra", "img": "assets/img/legends/frank-sinatra.jpg"},
+    {"name": "Ella Fitzgerald", "img": "assets/img/legends/ella-fitzgerald.jpg"},
+    {"name": "Nat King Cole", "img": "assets/img/legends/nat-king-cole.jpg"},
+    {"name": "Billie Holiday", "img": "assets/img/legends/billie-holiday.jpg"},
+    {"name": "Louis Armstrong", "img": "assets/img/legends/louis-armstrong.jpg"},
+    {"name": "Sarah Vaughan", "img": "assets/img/legends/sarah-vaughan.jpg"},
+]
+
 # ---------------------------------------------------------------------------
 # ADVERTISING — the homepage "sponsor stage" (first thing a visitor sees).
 # Mirrors legendsradio.com: a rotating 700x400 promo slider + "Our Partners"
@@ -474,6 +486,7 @@ def document(filename, title, desc, body, active, extra_schema=None, og_image="l
         "window.LEGENDS_STREAM=" + json.dumps(STATION["stream"]) + ";"
         "window.LEGENDS_POPOUT=" + json.dumps(STATION["popout"]) + ";"
         "window.LEGENDS_ARTWORK=" + json.dumps(BASE + "/assets/img/legends-artwork.png") + ";"
+        "window.LEGENDS_HOSTPHOTOS=" + json.dumps({h["slug"]: h["photo"] for h in HOSTS if h.get("photo")}) + ";"
     )
     schema = jsonld(breadcrumb(title.split(" | ")[0], filename) if filename != "index.html" else None,
                     extra_schema)
@@ -662,26 +675,11 @@ def event_card(ev, idx=0):
         '</article>'
     ) % (idx % 4, IC[ev["icon"]], ev["tag"], ev["title"], ev["blurb"], STATION["eventbrite"], IC["arrow"])
 
-def np_card():
-    return (
-        '<div class="np-card">'
-        '<div class="np-head"><span class="pill pill-live"><span class="dot-live"></span> On Air Now</span>' + EQ7 + '</div>'
-        '<div class="np-body">'
-        '<div class="vinyl-wrap"><div class="vinyl" style="--s:96px"></div><div class="sheen"></div></div>'
-        '<div class="np-info">'
-        '<div class="np-show" id="np-show">Nonstop Legends</div>'
-        '<div class="np-host" id="np-host">The Great American Songbook</div>'
-        '<div class="np-time" id="np-time"></div>'
-        '</div></div>'
-        '<div class="np-foot"><span class="np-next" id="np-next">Streaming live from the Palm Beaches</span>'
-        '<button class="btn btn-primary btn-sm" data-play data-play-label-text="Listen"><span class="ic-play" style="display:inline-flex">'
-        + IC["play"] + '</span> <span data-play-label>Listen</span></button></div>'
-        '</div>'
-    )
+def ad_partners_html(load="eager"):
+    return "".join(('<a class="ad-partner" href="%s" target="_blank" rel="sponsored noopener"><img src="%s" alt="%s" '
+                    'width="300" height="250" loading="%s" decoding="async"></a>') % (a["href"], a["img"], html.escape(a["alt"]), load)
+                   for a in AD_PARTNERS)
 
-# ===========================================================================
-# PAGES
-# ===========================================================================
 def ad_stage():
     """Homepage top-of-page ad banner: rotating 700x400 promo slider + 300x250 partner ads.
     Creative is shown at (or below) its native size and never cropped."""
@@ -697,52 +695,59 @@ def ad_stage():
     dots = "".join('<button type="button" class="ad-dot%s" aria-label="Show banner %d of %d"%s></button>'
                    % (" is-active" if i == 0 else "", i + 1, n, ' aria-current="true"' if i == 0 else "")
                    for i in range(n))
-    partners = "".join(('<a class="ad-partner" href="%s"%s><img src="%s" alt="%s" width="300" height="250" '
-                        'loading="eager" decoding="async"></a>') % (a["href"], ext, a["img"], html.escape(a["alt"]))
-                       for a in AD_PARTNERS)
+    partners = ad_partners_html()
     return (
         '<section class="ad-stage" aria-label="Featured events and sponsors" data-ad-slider>'
         '<div class="ad-inner">'
         '<div class="ad-bar"><span class="ad-label">Featured &amp; Sponsors</span>'
-        '<a class="ad-sell" href="advertise.html">Advertise with Legends ' + IC["arrow"] + '</a></div>'
-        '<div class="ad-grid">'
-        '<div class="ad-slider" aria-roledescription="carousel" aria-label="Featured banners">' + slides + '</div>'
-        '<div class="ad-partners" aria-label="Our partners">' + partners + '</div>'
-        '</div>'
         '<div class="ad-controls">'
         '<button type="button" class="ad-nav ad-prev" aria-label="Previous banner">' + IC["chevron"] + '</button>'
         '<div class="ad-dots">' + dots + '</div>'
         '<button type="button" class="ad-nav ad-next" aria-label="Next banner">' + IC["chevron"] + '</button>'
         '</div>'
+        '<a class="ad-sell" href="advertise.html">Advertise with Legends ' + IC["arrow"] + '</a></div>'
+        '<div class="ad-grid">'
+        '<div class="ad-slider" aria-roledescription="carousel" aria-label="Featured banners">' + slides + '</div>'
+        '<div class="ad-partners" aria-label="Our partners">' + partners + '</div>'
+        '</div>'
         '</div></section>'
     )
 
 def home_page():
+    s = STATION
+    faces = "".join(
+        '<figure class="face"><img src="%s" alt="%s" width="400" height="500" loading="%s" decoding="async">'
+        '<figcaption>%s</figcaption></figure>' % (f["img"], html.escape(f["name"]), "eager" if i < 3 else "lazy", html.escape(f["name"]))
+        for i, f in enumerate(LEGEND_FACES))
     hero = (
-        '<section class="hero hero-after-ads">'
-        + deco_bar() +
-        '<div class="hero-beam b1" aria-hidden="true"></div><div class="hero-beam b2" aria-hidden="true"></div>'
-        '<div class="hero-vignette" aria-hidden="true"></div>'
-        '<div class="container"><div class="hero-inner">'
-        '<div class="hero-copy reveal">'
-        '<div class="hero-badge"><span class="freq">100.3 FM</span><span class="sep"></span>'
-        '<small>Live &amp; Local · Palm Beach County</small></div>'
-        '<h1>Where <span class="accent foil">Legendary</span><br>Music Lives</h1>'
-        '<p class="hero-sub">The Great American Songbook, on the air 24/7 from Florida\'s Palm Beaches — '
-        'Sinatra to Bublé, Ella to Krall, all day and all night.</p>'
-        '<div class="hero-actions">'
-        '<button class="btn btn-primary btn-lg" data-play data-play-label-text="Listen Live">'
-        '<span class="eq eq-mini" aria-hidden="true"><i></i><i></i><i></i></span>'
-        '<span data-play-label>Listen Live</span></button>'
-        '<a class="btn btn-ghost btn-lg" href="shows.html">Explore the Lineup ' + IC["arrow"] + '</a>'
+        '<section class="hero3" aria-labelledby="hero-title"><div class="container hero3-grid">'
+        '<div class="hero3-copy">'
+        '<p class="hero2-kicker">100.3 FM · WLML · Palm Beach County</p>'
+        '<h1 class="hero2-title" id="hero-title">Where legendary music lives.</h1>'
+        '<p class="hero2-sub">Sinatra, Ella, Nat King Cole, Billie Holiday and the rest of the Great American '
+        'Songbook, live and local from the Palm Beaches, around the clock.</p>'
+        '<div class="hero2-actions">'
+        '<button type="button" class="hero2-play" data-play data-play-label-text="Listen live" aria-pressed="false">'
+        '<span class="hp-icon"><span class="ic-play">' + IC["play"] + '</span><span class="ic-pause">' + IC["pause"] + '</span></span>'
+        '<span class="hp-txt"><span data-play-label>Listen live</span><small>100.3 FM stream</small></span>'
+        '</button>'
+        '<a class="hero2-link" href="shows.html">See the weekly schedule</a>'
         '</div>'
-        '<div class="hero-meta">'
-        '<div><b>2014</b><span>On the Air Since</span></div>'
-        '<div><b>75+</b><span>Stations Coast&nbsp;to&nbsp;Coast</span></div>'
-        '<div><b>24/7</b><span>Worldwide Stream</span></div>'
+        '<div class="onair onair-compact" aria-label="On air now">'
+        '<div class="onair-photo"><img id="np-photo" alt="" width="300" height="375" decoding="async">'
+        '<span class="onair-fallback" aria-hidden="true">100.3</span></div>'
+        '<div class="onair-body">'
+        '<p class="onair-label"><span class="dot-live"></span> On air now</p>'
+        '<p class="onair-show" id="np-show">Nonstop Legends</p>'
+        '<p class="onair-host"><span id="np-host">The Great American Songbook</span> · <span id="np-time"></span></p>'
+        '<div class="onair-progress" aria-hidden="true"><span id="np-progress"></span></div>'
+        '<p class="onair-next" id="np-next"></p>'
         '</div></div>'
-        '<div class="hero-visual reveal reveal-d2">' + np_card() + '</div>'
-        '</div></div></section>'
+        '</div>'
+        '<div class="faces" aria-label="Legends you hear on 100.3">' + faces + '</div>'
+        '</div>'
+        '<p class="container faces-credit">Portraits: William P. Gottlieb Collection, Library of Congress.</p>'
+        '</section>'
     )
     stats = (
         '<section class="section-tight"><div class="container-wide"><div class="stats">'
@@ -802,7 +807,9 @@ def home_page():
         + listen_options_grid() +
         '</div></section>'
     )
-    body = ad_stage() + hero + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
+    partners_m = ('<section class="ad-partners-m" aria-label="Our partners"><div class="container">'
+                  '<p class="ad-label">Our Partners</p><div class="ad-partners">' + ad_partners_html("lazy") + '</div></div></section>')
+    body = ad_stage() + hero + partners_m + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
         "Pour a drink. Turn it up.",
         "The Great American Songbook is playing right now on 100.3 FM — and streaming worldwide.",
         secondary=("shows.html", "Browse Shows"))

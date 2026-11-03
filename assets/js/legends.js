@@ -57,7 +57,8 @@
       b.setAttribute("aria-pressed", String(state.playing));
       b.classList.toggle("playing", state.playing);
       var lbl = b.querySelector("[data-play-label]");
-      if (lbl) lbl.textContent = state.playing ? "Pause" : (b.dataset.playLabelText || "Listen Live");
+      if (lbl) lbl.textContent = state.playing ? "Pause" : state.loading ? "Connecting…" : (b.dataset.playLabelText || "Listen Live");
+      b.classList.toggle("loading", state.loading && !state.playing);
     });
     setEq(state.playing); setVinyl(state.playing);
   }
@@ -70,7 +71,14 @@
     var p = audio.play();
     if (p && p.catch) p.catch(function () { onError(); });
   }
-  function pause() { if (audio) { audio.pause(); try { audio.removeAttribute("src"); audio.load(); } catch (e) {} } }
+  function pause() {
+    if (!audio) return;
+    audio.pause();
+    // dropping the src (so the next play reconnects at the live edge) makes load() discard the
+    // queued "pause" event — so set the state here or every button stays stuck on "Pause".
+    try { audio.removeAttribute("src"); audio.load(); } catch (e) {}
+    state.playing = false; state.loading = false; reflectUI();
+  }
   function toggle_() { state.playing ? pause() : play(); }
 
   function onError() {
@@ -159,7 +167,15 @@
     var hc = $("#np-show"); if (hc) hc.textContent = showName;
     var hh = $("#np-host"); if (hh) hh.textContent = hostName;
     var ht = $("#np-time"); if (ht) ht.textContent = timeStr;
-    var hn = $("#np-next"); if (hn && nxt) hn.innerHTML = "Up next · <b>" + nxt.show + "</b> at " + fmt(nxt.start);
+    var hn = $("#np-next"); if (hn && nxt) hn.innerHTML = "Up next: <b>" + nxt.show + "</b> at " + fmt(nxt.start);
+    var photos = window.LEGENDS_HOSTPHOTOS || {}, img = $("#np-photo"), panel = $(".onair");
+    if (img && panel) {
+      var src = cur && cur.slot.slug ? photos[cur.slot.slug] : "";
+      if (src) { if (img.getAttribute("src") !== src) img.src = src; img.alt = hostName; panel.classList.add("has-photo"); }
+      else { img.removeAttribute("src"); img.alt = ""; panel.classList.remove("has-photo"); }
+    }
+    var prog = $("#np-progress");
+    if (prog && cur) prog.style.width = Math.max(2, Math.min(100, ((cur.now - cur.start) / (cur.end - cur.start)) * 100)) + "%";
 
     // sticky player meta
     var ps = $(".player .p-show"); if (ps) ps.textContent = showName;

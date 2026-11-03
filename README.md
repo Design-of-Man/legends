@@ -151,3 +151,10 @@ two 300×250 "Our Partners" display ads, with an "Advertise on Legends" link. Th
 station's real current banners, copied from legendsradio.com into `assets/img/ads/`.
 To sell or swap a spot, add the image to `assets/img/ads/`, edit `AD_SLIDES` / `AD_PARTNERS`
 in `build.py`, and rebuild.
+
+## Hero portraits
+The homepage hero shows six legends of the Songbook (Sinatra, Ella Fitzgerald, Nat King Cole,
+Billie Holiday, Louis Armstrong, Sarah Vaughan). All six are William P. Gottlieb photographs from
+the Library of Congress's *Jazz Photography of William P. Gottlieb* collection, which Gottlieb placed
+in the public domain (2010). They are cropped to 4:5 and converted to matched black & white in
+`assets/img/legends/`. The hero carries a one-line credit. Edit `LEGEND_FACES` in `build.py` to swap.
