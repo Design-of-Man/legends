@@ -237,6 +237,55 @@ section{position:relative;}
 }
 
 /* ==========================================================================
+   AD STAGE — homepage top-of-page sponsor banners (first thing on screen)
+   Rotating 700x400 promo slider + stacked 300x250 partner display ads.
+   ========================================================================== */
+.ad-stage{position:relative;padding:calc(76px + .9rem) 0 1.4rem;
+  background:linear-gradient(180deg,var(--night) 0%,#120a09 100%);border-bottom:1px solid var(--line);}
+.ad-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.7rem;}
+.ad-label{font-size:.66rem;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--muted-2);}
+.ad-sell{display:inline-flex;align-items:center;gap:.4em;font-size:.78rem;font-weight:600;color:var(--gold);}
+.ad-sell svg{width:1em;transition:transform .3s var(--ease);}
+.ad-sell:hover svg{transform:translateX(3px);}
+/* slider : partner column ratio chosen so two 6:5 ads stack to the 7:4 slider height */
+.ad-grid{display:grid;grid-template-columns:minmax(0,2.9fr) minmax(0,1fr);gap:.9rem;align-items:start;}
+.ad-slider{position:relative;aspect-ratio:7/4;border-radius:var(--radius);overflow:hidden;
+  background:var(--ink-3);border:1px solid var(--line);box-shadow:0 24px 60px -30px rgba(0,0,0,.9);}
+.ad-track,.ad-slide{position:absolute;inset:0;}
+.ad-slide{opacity:0;visibility:hidden;transition:opacity .8s var(--ease),visibility 0s .8s;}
+.ad-slide.is-active{opacity:1;visibility:visible;transition:opacity .8s var(--ease),visibility 0s;}
+.ad-slide img{width:100%;height:100%;object-fit:cover;display:block;}
+.ad-nav{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:rgba(5,3,3,.62);color:#fff;
+  border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);opacity:0;transition:opacity .25s,background .25s;z-index:2;}
+.ad-nav svg{width:20px;height:20px;}
+.ad-prev{left:.7rem;}.ad-prev svg{transform:rotate(180deg);}
+.ad-next{right:.7rem;}
+.ad-slider:hover .ad-nav,.ad-nav:focus-visible{opacity:1;}
+.ad-nav:hover{background:rgba(5,3,3,.85);}
+.ad-dots{display:flex;gap:.1rem;margin-left:auto;margin-right:.6rem;}
+.ad-dot{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.ad-dot::before{content:"";width:7px;height:7px;border-radius:50%;background:rgba(247,242,230,.3);transition:background .25s,transform .25s;}
+.ad-dot:hover::before{background:rgba(247,242,230,.6);}
+.ad-dot.is-active::before{background:var(--gold);transform:scale(1.3);}
+.ad-partners{display:flex;flex-direction:column;gap:.9rem;align-self:stretch;}
+.ad-partner{position:relative;flex:1;min-height:0;border-radius:var(--radius-sm);overflow:hidden;background:var(--ink-3);
+  border:1px solid var(--line);transition:transform .35s var(--ease),border-color .3s;}
+.ad-partner:hover{transform:translateY(-2px);border-color:var(--gold-deep);}
+.ad-partner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.hero.hero-after-ads{min-height:auto;padding-top:clamp(3.5rem,7vw,6rem);}
+@media (hover:none){.ad-nav{opacity:1;width:36px;height:36px;}}
+@media (max-width:860px){
+  .ad-grid{grid-template-columns:1fr;}
+  .ad-partners{flex-direction:row;}
+  .ad-partner{aspect-ratio:6/5;}
+  .ad-label{display:none;}
+  .ad-dots{margin-left:0;}
+  .ad-bar{margin-bottom:.5rem;}
+}
+@media (prefers-reduced-motion:reduce){.ad-slide,.ad-slide.is-active{transition:none;}}
+
+/* ==========================================================================
    HERO
    ========================================================================== */
 .hero{

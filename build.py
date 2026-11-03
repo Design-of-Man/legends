@@ -219,6 +219,33 @@ SIGNATURE = [
      "blurb": "A midday set of the greatest recordings ever made — the perfect soundtrack to your lunch hour."},
 ]
 
+# ---------------------------------------------------------------------------
+# ADVERTISING — the homepage "sponsor stage" (first thing a visitor sees).
+# Mirrors legendsradio.com: a rotating 700x400 promo slider + "Our Partners"
+# 300x250 display ads. To sell/swap a spot: drop the creative in
+# assets/img/ads/, edit the entry below, rebuild. Order = rotation order.
+# ---------------------------------------------------------------------------
+AD_SLIDES = [  # 700x400 rotating banners
+    {"img": "assets/img/ads/gas-benefactors-gala.webp", "href": "https://preserveourgas.org/gala",
+     "alt": "The Society for the Preservation of the Great American Songbook 2026 Benefactors Gala honoring Kenny G — Thursday, December 10, 2026, Glazer Hall, Palm Beach. Click for tickets."},
+    {"img": "assets/img/ads/paula-poundstone.webp", "href": "https://legendsradio-wlml-fm.secondstreetapp.com/Paula-Poundstone-Ticket-Giveaway/",
+     "alt": "Paula Poundstone, Truist Comedy Series at the Broward Center, November 14 — register to win tickets."},
+    {"img": "assets/img/ads/eagles-tribute.webp", "href": "https://www.eventbrite.com/e/the-long-run-a-tribute-to-the-eagles-tickets-1988369104517",
+     "alt": "Earl Stewart Toyota Live Concert Series at Abacoa — The Long Run, a tribute to the Eagles. Get tickets."},
+    {"img": "assets/img/ads/culture-circuit.webp", "href": "https://culturecircuit.art/",
+     "alt": "The Culture Circuit, your insider's guide to arts and culture in the Palm Beaches — Saturdays at 9 AM with host Heather Storm, presented by the Cultural Council."},
+    {"img": "assets/img/ads/bake-me-a-wish.webp", "href": "https://legendsradio-wlml-fm.secondstreetapp.com/Bake-Me-a-Wish/",
+     "alt": "Bake Me A Wish! Tune into The Morning Lounge with Jill and Rich on Legends 100.3 FM to win a cake."},
+    {"img": "assets/img/ads/gas-your-legends-hour.webp", "href": "https://preserveourgas.org/your-legends-hour/",
+     "alt": "Your Songs. Your Story. Your Hour. — create your own one-hour radio show of the Great American Songbook on Legends Radio."},
+]
+AD_PARTNERS = [  # 300x250 display ads ("Our Partners")
+    {"img": "assets/img/ads/see-vision-300x250.webp", "href": "https://seevisioneye.com/",
+     "alt": "See Vision Eye Institute — concierge-level eye care with Jason Gorscak, MD and Kylie Barto, OD. Click to learn more."},
+    {"img": "assets/img/ads/cosmetic-dentist-300x250.jpg", "href": "http://www.thecosmeticdentist.com/",
+     "alt": "TheCosmeticDentist.com — Jeffrey M. Cohen, D.M.D., (561) 967-8200. Click for special offers."},
+]
+
 NAV = [("index.html", "Home"), ("listen.html", "Listen Live"), ("shows.html", "Shows"),
        ("hosts.html", "On-Air"), ("podcast.html", "On-Demand"), ("events.html", "Events"),
        ("about.html", "About"), ("advertise.html", "Advertise"), ("contact.html", "Contact")]
@@ -655,9 +682,40 @@ def np_card():
 # ===========================================================================
 # PAGES
 # ===========================================================================
+def ad_stage():
+    """Homepage top-of-page ad banner: rotating promo slider + partner display ads."""
+    ext = ' target="_blank" rel="sponsored noopener"'
+    slides = ""
+    for i, a in enumerate(AD_SLIDES):
+        load = ' loading="eager" fetchpriority="high"' if i == 0 else ' loading="lazy"'
+        slides += ('<a class="ad-slide%s" href="%s"%s role="group" aria-roledescription="slide" '
+                   'aria-label="%d of %d"%s><img src="%s" alt="%s" width="700" height="400" decoding="async"%s></a>') % (
+            " is-active" if i == 0 else "", a["href"], ext, i + 1, len(AD_SLIDES),
+            "" if i == 0 else ' aria-hidden="true" tabindex="-1"', a["img"], html.escape(a["alt"]), load)
+    dots = "".join('<button type="button" class="ad-dot%s" aria-label="Show banner %d"%s></button>'
+                   % (" is-active" if i == 0 else "", i + 1, ' aria-current="true"' if i == 0 else "")
+                   for i in range(len(AD_SLIDES)))
+    partners = "".join(('<a class="ad-partner" href="%s"%s><img src="%s" alt="%s" width="300" height="250" '
+                        'loading="eager" decoding="async"></a>') % (a["href"], ext, a["img"], html.escape(a["alt"]))
+                       for a in AD_PARTNERS)
+    return (
+        '<section class="ad-stage" aria-label="Featured sponsors and events" data-ad-slider><div class="container-wide">'
+        '<div class="ad-bar"><span class="ad-label">Featured &amp; Sponsors</span>'
+        '<div class="ad-dots">' + dots + '</div>'
+        '<a class="ad-sell" href="advertise.html">Advertise on Legends ' + IC["arrow"] + '</a></div>'
+        '<div class="ad-grid">'
+        '<div class="ad-slider" aria-roledescription="carousel" aria-label="Featured banners">'
+        '<div class="ad-track">' + slides + '</div>'
+        '<button type="button" class="ad-nav ad-prev" aria-label="Previous banner">' + IC["chevron"] + '</button>'
+        '<button type="button" class="ad-nav ad-next" aria-label="Next banner">' + IC["chevron"] + '</button>'
+        '</div>'
+        '<div class="ad-partners" aria-label="Our partners">' + partners + '</div>'
+        '</div></div></section>'
+    )
+
 def home_page():
     hero = (
-        '<section class="hero">'
+        '<section class="hero hero-after-ads">'
         + deco_bar() +
         '<div class="hero-beam b1" aria-hidden="true"></div><div class="hero-beam b2" aria-hidden="true"></div>'
         '<div class="hero-vignette" aria-hidden="true"></div>'
@@ -742,7 +800,7 @@ def home_page():
         + listen_options_grid() +
         '</div></section>'
     )
-    body = hero + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
+    body = ad_stage() + hero + marquee() + stats + intro + shows + hosts + events + listen + newsletter_block() + cta_band(
         "Pour a drink. Turn it up.",
         "The Great American Songbook is playing right now on 100.3 FM — and streaming worldwide.",
         secondary=("shows.html", "Browse Shows"))
